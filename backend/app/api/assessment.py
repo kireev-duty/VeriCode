@@ -39,7 +39,7 @@ def _item_out(item) -> dict | None:
     return {"id": item.id, "position": item.position, "skill": item.skill,
             "skill_title": SKILL_BY_ID[item.skill].title if item.skill in SKILL_BY_ID else item.skill,
             "family_title": fam.title if fam else "", "format": fam.fmt if fam else "",
-            "time_limit_s": item.time_limit_s, "shown_at": item.shown_at.isoformat(), **item.payload}
+            "time_limit_s": item.time_limit_s, "shown_at": service._as_aware(item.shown_at).isoformat(), **item.payload}
 
 
 def _session_out(s: AssessmentSession, with_review: bool = False) -> dict:

@@ -75,9 +75,9 @@ def _issue_verification(db, user: User) -> tuple[bool, str]:
 
 
 def create_user(db, email: str, password: str, role: str, company_name: str | None = None,
-                verified: bool = False, demo: bool = False) -> User:
-    user = User(email=email.lower(), password_hash=hash_password(password), role=role, email_verified=verified,
-                is_demo=demo)
+                verified: bool = False, demo: bool = False, password_hash: str | None = None) -> User:
+    user = User(email=email.lower(), password_hash=password_hash or hash_password(password), role=role,
+                email_verified=verified, is_demo=demo)
     db.add(user)
     db.flush()
     if role == "candidate":

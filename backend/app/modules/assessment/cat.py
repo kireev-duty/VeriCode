@@ -13,7 +13,7 @@ Design choices (see docs/testing.md):
 
 import random
 from dataclasses import dataclass, field
-from functools import lru_cache
+from functools import cache
 
 from app.catalog import GRADE_BY_ID, GRADES, SKILL_SIM, grade_center, grade_from_theta, grade_index
 from app.modules.assessment.families import REGISTRY
@@ -58,7 +58,7 @@ class Decision:
     skill_theta: dict[str, float] = field(default_factory=dict)
 
 
-@lru_cache(maxsize=None)
+@cache
 def _guess_floor(family_id: str, tier: int) -> float:
     sample = REGISTRY[family_id].generate(random.Random(0), tier)
     return guess_floor(sample.kind, len(sample.options))

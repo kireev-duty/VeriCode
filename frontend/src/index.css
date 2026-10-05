@@ -1,0 +1,68 @@
+@import "tailwindcss";
+@import "@fontsource-variable/golos-text";
+@import "@fontsource-variable/jetbrains-mono";
+
+@theme {
+  --font-sans: "Golos Text Variable", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
+
+  /* ФСП brand: primary #402FFF, accent #EC1D35, ink #1B1C21 */
+  --color-brand-50: #f1efff;
+  --color-brand-100: #e3dfff;
+  --color-brand-200: #c6bfff;
+  --color-brand-300: #a094ff;
+  --color-brand-400: #6f5dff;
+  --color-brand-500: #402fff;
+  --color-brand-600: #3222e0;
+  --color-brand-700: #2719b4;
+  --color-brand-800: #1e1489;
+  --color-brand-900: #160f5e;
+  --color-accent-500: #ec1d35;
+  --color-accent-50: #fdeef0;
+  --color-ink: #1b1c21;
+  --color-muted: #66676e;
+  --color-line: #e6e6eb;
+  --color-surface: #f6f6f9;
+  --color-ok: #0b8a5f;
+  --color-ok-50: #e7f6f0;
+  --color-warn: #b45309;
+  --color-warn-50: #fdf4e3;
+}
+
+html {
+  color: var(--color-ink);
+  background: var(--color-surface);
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+}
+
+.mono-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* thin "trace" lines from the brand book */
+.trace-bg {
+  background-image:
+    radial-gradient(circle at 1px 1px, rgb(64 47 255 / 0.12) 1px, transparent 0);
+  background-size: 22px 22px;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+.animate-fade-in { animation: fade-in 0.25s ease-out both; }
+
+/* code must read exactly as typed: no "=>" -> "⇒" ligatures in tests */
+pre, code, kbd, .font-mono, input { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; }

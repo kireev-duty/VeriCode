@@ -2,10 +2,10 @@
 
 from datetime import datetime
 
-from sqlalchemy import JSON, Boolean, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import JSON, Boolean, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.db import Base, TimestampMixin, utcnow
+from app.core.db import Base, TimestampMixin, UTCDateTime, utcnow
 
 # ----------------------------------------------------------------------------------------------- users & auth
 
@@ -32,8 +32,8 @@ class EmailToken(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     token_hash: Mapped[str] = mapped_column(String(64), unique=True)
     purpose: Mapped[str] = mapped_column(String(20), default="verify")
-    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    expires_at: Mapped[datetime] = mapped_column(UTCDateTime())
+    used_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
 
 
 # ----------------------------------------------------------------------------------------------- candidate
@@ -78,21 +78,21 @@ class CandidateProfile(TimestampMixin, Base):
     theta: Mapped[float | None] = mapped_column(Float)
     theta_se: Mapped[float | None] = mapped_column(Float)
     skill_theta: Mapped[dict] = mapped_column(JSON, default=dict)  # per-skill ability estimates from the test
-    grade_confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    grade_changed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    grade_confirmed_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    grade_changed_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
 
     # freshness of the profile, fed by regular tasks
-    last_task_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_task_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
     task_score: Mapped[float] = mapped_column(Float, default=0)
 
     # FSP
     fsp_id: Mapped[str | None] = mapped_column(String(64), index=True)
-    fsp_linked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    fsp_linked_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
     fsp_profile: Mapped[dict] = mapped_column(JSON, default=dict)  # rank, rating, region (cached from registry)
 
     # privacy & consents (152-FZ)
-    consent_processing_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    consent_publication_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    consent_processing_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    consent_publication_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
     visible_to_employers: Mapped[bool] = mapped_column(Boolean, default=True)
     privacy: Mapped[dict] = mapped_column(JSON, default=dict)  # {"show_city": true, "show_experience": true, ...}
     open_to_offers: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -118,7 +118,7 @@ class FspAchievement(Base):
     event_name: Mapped[str] = mapped_column(String(300))
     event_level: Mapped[str] = mapped_column(String(30))  # regional | federal | international
     discipline: Mapped[str] = mapped_column(String(40))  # product | algorithmic | security | drones | robotics
-    date: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    date: Mapped[datetime] = mapped_column(UTCDateTime())
     place: Mapped[int | None] = mapped_column(Integer)
     participants: Mapped[int | None] = mapped_column(Integer)
     team_name: Mapped[str] = mapped_column(String(200), default="")
@@ -146,7 +146,7 @@ class ItemFamilyStat(Base):
     correct: Mapped[int] = mapped_column(Integer, default=0)
     residual_cusum: Mapped[float] = mapped_column(Float, default=0)  # leak detector state
     status: Mapped[str] = mapped_column(String(20), default="active")  # active | flagged | retired
-    flagged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    flagged_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
 
 
 class AssessmentSession(TimestampMixin, Base):
@@ -168,7 +168,7 @@ class AssessmentSession(TimestampMixin, Base):
     p_target: Mapped[float | None] = mapped_column(Float)  # posterior P(theta >= target threshold)
     skill_theta: Mapped[dict] = mapped_column(JSON, default=dict)
     flags: Mapped[dict] = mapped_column(JSON, default=dict)  # integrity signals summary
-    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    finished_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
 
     items: Mapped[list["AssessmentItem"]] = relationship(
         back_populates="session", cascade="all, delete-orphan", order_by="AssessmentItem.position"
@@ -191,8 +191,8 @@ class AssessmentItem(Base):
     response: Mapped[dict | None] = mapped_column(JSON)
     is_correct: Mapped[bool | None] = mapped_column(Boolean)
     time_limit_s: Mapped[int] = mapped_column(Integer, default=120)
-    shown_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
-    answered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    shown_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
+    answered_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
     signals: Mapped[dict] = mapped_column(JSON, default=dict)  # paste, blur count, client time
 
     session: Mapped[AssessmentSession] = relationship(back_populates="items")
@@ -208,7 +208,7 @@ class GradeHistory(Base):
     previous_grade: Mapped[str | None] = mapped_column(String(20))
     session_id: Mapped[int | None] = mapped_column(ForeignKey("assessment_sessions.id", ondelete="SET NULL"))
     reason: Mapped[str] = mapped_column(String(200), default="")
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
 
 
 # ----------------------------------------------------------------------------------------------- employer
@@ -305,9 +305,9 @@ class Invitation(TimestampMixin, Base):
     match_score: Mapped[float | None] = mapped_column(Float)
     match_explanation: Mapped[list] = mapped_column(JSON, default=list)
     challenge_task_id: Mapped[int | None] = mapped_column(ForeignKey("regular_tasks.id", ondelete="SET NULL"))
-    viewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    responded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    viewed_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    responded_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    expires_at: Mapped[datetime] = mapped_column(UTCDateTime())
 
     company: Mapped[Company] = relationship()
     candidate: Mapped[CandidateProfile] = relationship()
@@ -378,7 +378,7 @@ class Notification(Base):
     title: Mapped[str] = mapped_column(String(300))
     link: Mapped[str] = mapped_column(String(300), default="")
     read: Mapped[bool] = mapped_column(Boolean, default=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
 
 
 class Complaint(Base):
@@ -390,7 +390,7 @@ class Complaint(Base):
     invitation_id: Mapped[int | None] = mapped_column(ForeignKey("invitations.id", ondelete="SET NULL"))
     reason: Mapped[str] = mapped_column(String(40))
     comment: Mapped[str] = mapped_column(Text, default="")
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
 
 
 class WebhookDelivery(Base):
@@ -402,4 +402,4 @@ class WebhookDelivery(Base):
     payload: Mapped[dict] = mapped_column(JSON)
     status_code: Mapped[int | None] = mapped_column(Integer)
     error: Mapped[str] = mapped_column(String(500), default="")
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)

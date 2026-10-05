@@ -1,0 +1,85 @@
+# ФСП Талант: `docker compose up -d --build`, затем http://localhost:8080
+#   /            веб-приложение (кандидат и работодатель)
+#   /api/docs    Swagger (OpenAPI)
+#   /auth        ФСП ID (Keycloak, realm "fsp") — демонстрация совместимой авторизации
+#   /mail        почтовый ящик для писем подтверждения (Mailpit)
+
+x-backend-env: &backend-env
+  DATABASE_URL: postgresql+psycopg://fsp:${POSTGRES_PASSWORD:-fsp}@db:5432/fsp
+  JWT_SECRET: ${JWT_SECRET:-change-me-please-long-random-string-0123456789}
+  PUBLIC_URL: ${PUBLIC_URL:-http://localhost:8080}
+  CORS_ORIGINS: '["${PUBLIC_URL:-http://localhost:8080}"]'
+  SMTP_HOST: mailpit
+  SMTP_PORT: "1025"
+  EXPOSE_EMAIL_LINKS: ${EXPOSE_EMAIL_LINKS:-true}
+  FSP_OIDC_ENABLED: ${FSP_OIDC_ENABLED:-true}
+  FSP_OIDC_ISSUER: http://keycloak:8080/auth/realms/fsp
+  FSP_OIDC_PUBLIC_ISSUER: ${PUBLIC_URL:-http://localhost:8080}/auth/realms/fsp
+  FSP_REGISTRY_URL: http://fsp_registry:8090
+  LLM_PROVIDER: ${LLM_PROVIDER:-none}
+  LLM_API_KEY: ${LLM_API_KEY:-}
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: fsp
+      POSTGRES_USER: fsp
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fsp}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fsp -d fsp"]
+      interval: 5s
+      retries: 20
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    environment:
+      <<: *backend-env
+      SEED_DEMO: ${SEED_DEMO:-true}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  fsp_registry:
+    build: ./backend
+    command: ["uvicorn", "app.modules.fsp.registry_app:app", "--host", "0.0.0.0", "--port", "8090"]
+    environment:
+      RUN_MIGRATIONS: "false"
+    restart: unless-stopped
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.1
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_HTTP_RELATIVE_PATH: /auth
+      KC_HOSTNAME: ${PUBLIC_URL:-http://localhost:8080}/auth
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+      KC_PROXY_HEADERS: xforwarded
+      KC_HTTP_ENABLED: "true"
+      JAVA_OPTS_KC_HEAP: "-XX:MaxRAMPercentage=50 -Xms128m -Xmx512m"
+    volumes:
+      - ./deploy/keycloak/realm-fsp.json:/opt/keycloak/data/import/realm-fsp.json:ro
+    restart: unless-stopped
+
+  mailpit:
+    image: axllent/mailpit:v1.21
+    environment:
+      MP_WEBROOT: /mail/
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "${HTTP_PORT:-8080}:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  pgdata:

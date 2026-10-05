@@ -1,0 +1,40 @@
+{
+  "realm": "fsp",
+  "displayName": "ФСП ID (демо)",
+  "enabled": true,
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "internationalizationEnabled": true,
+  "supportedLocales": ["ru", "en"],
+  "defaultLocale": "ru",
+  "sslRequired": "none",
+  "clients": [
+    {
+      "clientId": "fsp-talent",
+      "name": "ФСП Талант",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "fsp-talent-secret",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": ["*"],
+      "webOrigins": ["+"],
+      "attributes": {"pkce.code.challenge.method": ""}
+    }
+  ],
+  "users": [
+    {"username": "fsp-100231", "enabled": true, "email": "a.smirnov@fsp-demo.ru", "emailVerified": true,
+     "firstName": "Алексей", "lastName": "Смирнов",
+     "credentials": [{"type": "password", "value": "fsp12345", "temporary": false}]},
+    {"username": "fsp-123457", "enabled": true, "email": "m.ivanova@fsp-demo.ru", "emailVerified": true,
+     "firstName": "Мария", "lastName": "Иванова",
+     "credentials": [{"type": "password", "value": "fsp12345", "temporary": false}]},
+    {"username": "fsp-200001", "enabled": true, "email": "i.kuznetsov@fsp-demo.ru", "emailVerified": true,
+     "firstName": "Иван", "lastName": "Кузнецов",
+     "credentials": [{"type": "password", "value": "fsp12345", "temporary": false}]},
+    {"username": "fsp-300010", "enabled": true, "email": "no.history@fsp-demo.ru", "emailVerified": true,
+     "firstName": "Без", "lastName": "Истории",
+     "credentials": [{"type": "password", "value": "fsp12345", "temporary": false}]}
+  ]
+}
