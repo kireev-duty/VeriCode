@@ -106,7 +106,12 @@ def py_exceptions(rng: random.Random, tier: int) -> Instance:
 def py_iterators(rng: random.Random, tier: int) -> Instance:
     n, k = rng.randint(3, 6), rng.randint(2, 4)
     if tier == 2:
-        code = f"g = (x * {k} for x in range({n}))\nprint(sum(g), sum(g))"
+        m = rng.randint(1, 3)
+        code = rng.choice([
+            f"g = (x * {k} for x in range({n}))\nprint(sum(g), sum(g))",
+            f"g = (x + {m} for x in range({n}) if x % {k})\nfirst = list(g)\nprint(len(first), list(g))",
+            f"it = map(lambda x: x * {k}, range({n}))\nprint(max(it), sum(it))",
+        ])
     else:
         xs = _ints(rng, rng.choice([5, 6, 7]), 1, 20)
         code = rng.choice([
@@ -126,9 +131,13 @@ def py_classes(rng: random.Random, tier: int) -> Instance:
         shared = rng.random() < 0.6
         init = "" if shared else "    def __init__(self):\n        self.items = []\n"
         attr = "    items = []\n" if shared else ""
+        n = rng.randint(2, 5)
+        k = rng.randint(1, 4)
+        idx = rng.randrange(n)
+        what = rng.choice([f"len(objs[{idx}].items)", f"sum(objs[{idx}].items)", f"objs[{idx}].items[-1]"])
         code = (f"class {cls}:\n{attr}{init}    def add(self, x):\n        self.items.append(x)\n\n"
-                f"objs = [{cls}() for _ in range({n})]\nfor i, o in enumerate(objs):\n    o.add(i)\n"
-                f"print(len(objs[0].items))")
+                f"objs = [{cls}() for _ in range({n})]\nfor i, o in enumerate(objs):\n    o.add(i * {k})\n"
+                f"print({what})")
     else:
         letters = rng.sample(["A", "B", "C", "D"], 4)
         base, left, right, child = letters

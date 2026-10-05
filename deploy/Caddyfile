@@ -1,0 +1,5 @@
+# Automatic HTTPS in front of the compose stack (nginx on :8080). Replace the domain.
+talent.example.ru {
+	encode gzip
+	reverse_proxy localhost:8080
+}

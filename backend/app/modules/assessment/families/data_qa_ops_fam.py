@@ -122,10 +122,24 @@ def qa_design(rng: random.Random, tier: int) -> Instance:
                                [f"{lo}, {hi}", f"{lo + 1}, {hi - 1}", f"{lo - 1}, {hi + 1}",
                                 f"{lo}, {(lo + hi) // 2}, {hi}"])
     if tier == 2:
-        k = rng.randint(3, 5)
-        return Instance(prompt=f"Скидка зависит от {k} независимых булевых условий (клиент новый, промокод, сумма > "
-                               f"порога и т. д.). Сколько правил (столбцов) в полной таблице решений?",
-                        kind="number", answer=2**k)
+        contexts = [
+            ("Скидка в корзине", ["клиент новый", "есть промокод", "сумма больше порога", "товар по акции",
+                                  "оплата картой банка-партнёра", "доставка самовывозом"]),
+            ("Одобрение кредитной заявки", ["есть зарплатный проект", "стаж больше года", "нет просрочек",
+                                            "подтверждён доход", "есть поручитель", "клиент VIP"]),
+            ("Маршрутизация тикета поддержки", ["клиент платный", "ошибка блокирующая", "рабочее время",
+                                               "повторное обращение", "язык не русский", "есть вложение"]),
+            ("Доступ к документу", ["пользователь автор", "состоит в группе", "документ опубликован",
+                                    "включён режим аудита", "есть подпись руководителя", "доступ из офиса"]),
+        ]
+        title, conds = rng.choice(contexts)
+        k = rng.randint(2, 6)
+        used = rng.sample(conds, k)
+        extra = rng.randint(0, 1)
+        prompt = (f"{title} зависит от {k} независимых булевых условий: {', '.join(used)}."
+                  + (" Ещё одно условие — категория клиента — принимает 3 значения." if extra else "")
+                  + " Сколько правил (столбцов) в полной таблице решений?")
+        return Instance(prompt=prompt, kind="number", answer=2**k * (3 if extra else 1))
     counts = sorted([rng.randint(2, 5) for _ in range(rng.randint(3, 5))], reverse=True)
     params = ", ".join(f"{name}: {c}" for name, c in zip(["браузер", "ОС", "язык", "тариф", "роль"], counts))
     return Instance(prompt=f"Параметры и число их значений: {params}. Какое минимальное число тестов теоретически "
@@ -163,13 +177,22 @@ _GOOD = {"integer": "42", "string": '"text"', "boolean": "true", "number": "9.5"
         {1: Tier(-0.6, 1.4, 120), 2: Tier(0.5, 1.6, 150)})
 def api_contract(rng: random.Random, tier: int) -> Instance:
     if tier == 1:
-        n = rng.randint(2, 5)
-        method = rng.choice(["POST /orders", "PUT /orders/17"])
-        ans = n if method.startswith("POST") else 1
-        return Instance(prompt=f"Тест {n} раза отправил одинаковый запрос `{method}` с одним и тем же телом "
-                               f"(ключа идемпотентности нет). Сколько заказов окажется в системе, если API "
-                               f"реализовано по семантике HTTP и до теста заказов не было?", kind="number",
-                        answer=ans, explanation="PUT идемпотентен, POST — нет.")
+        res = rng.choice(["orders", "tickets", "users", "invoices", "projects"])
+        n = rng.randint(2, 6)
+        m = rng.randint(1, 5)
+        rid = rng.randint(10, 999)
+        method, ans = rng.choice([
+            (f"POST /{res}", m + n),
+            (f"PUT /{res}/{rid}", m + 1),
+            (f"DELETE /{res}/{rid}", m - 1),
+        ])
+        state = (f"{m} записей, записи с id={rid} среди них нет" if method.startswith("PUT")
+                 else f"{m} записей, включая запись с id={rid}" if method.startswith("DELETE") else f"{m} записей")
+        return Instance(prompt=f"До теста в коллекции `/{res}` было {state}. Тест {n} раз подряд отправил "
+                               f"одинаковый запрос `{method}` с одним и тем же телом (ключа идемпотентности нет). "
+                               f"Сколько записей останется, если API реализовано по семантике HTTP?",
+                        kind="number", answer=ans,
+                        explanation="PUT и DELETE идемпотентны, POST — нет; PUT на несуществующий id создаёт запись.")
     fields = rng.sample(API_FIELDS, 5)
     required = [f for f in fields if rng.random() < 0.7] or fields[:1]
     broken = rng.choice(fields)
@@ -227,7 +250,7 @@ def linux_perms(rng: random.Random, tier: int) -> Instance:
         return Instance(prompt=f"Как будут выглядеть права после `chmod {octal} app.sh` в выводе `ls -l` "
                                "(9 символов, например rwxr-x---)?", kind="text", answer=_sym(octal))
     if tier == 2:
-        umask = rng.choice(["022", "027", "077", "002", "026"])
+        umask = rng.choice(["022", "027", "077", "002", "026", "007", "037", "033", "006", "023", "072", "017"])
         obj, base = rng.choice([("файл", 0o666), ("каталог", 0o777)])
         val = base & ~int(umask, 8)
         return Instance(prompt=f"umask = {umask}. С какими правами (в восьмеричном виде, 3 цифры) будет создан новый "

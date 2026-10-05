@@ -13,12 +13,12 @@ from app.catalog import GRADE_BY_ID, GRADE_ORDER, SKILL_BY_ID, skill_similarity
 from app.modules.nlp import text_similarity
 
 DEFAULT_WEIGHTS = {
-    "skills": 0.30,  # coverage of required / desired stack, verified skills count more
+    "skills": 0.32,  # coverage of required / desired stack, verified skills count more
     "grade": 0.20,  # category grade vs requested grade
-    "test": 0.15,  # how strongly the test result sits inside the band (ability on the needed skills)
-    "fsp": 0.10,  # confirmed FSP achievements (additive bonus, no penalty without history)
-    "salary": 0.10,  # expectation vs offered range
-    "format": 0.07,  # work format and city
+    "test": 0.16,  # how strongly the test result sits inside the band (ability on the needed skills)
+    "fsp": 0.05,  # confirmed FSP achievements (additive bonus, no penalty without history); tuned in validation
+    "salary": 0.11,  # expectation vs offered range
+    "format": 0.08,  # work format and city
     "freshness": 0.05,  # recent test / regular tasks
     "text": 0.03,  # semantic closeness of the need description and the profile
 }

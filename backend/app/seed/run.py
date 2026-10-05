@@ -33,6 +33,7 @@ from app.models import (
     User,
     Vacancy,
 )
+from app.modules.assessment.irt import p_correct
 from app.modules.assessment.service import ensure_item_stats, load_bank
 from app.modules.fsp import registry_app
 from app.modules.invitations import DECLINE_REASONS
@@ -175,9 +176,10 @@ def make_candidate_user(db, rng, s: synth.SynthCandidate, email: str, bank, trut
                             reason="Грейд подтверждён тестом" if att["outcome"] != "not_confirmed"
                             else "Заявленный грейд не подтверждён"))
     for r in res["responses"]:
-        st = stats.setdefault(r.item.key, [0, 0])
+        st = stats.setdefault(r.item.key, [0, 0, 0.0])
         st[0] += 1
         st[1] += int(r.correct)
+        st[2] += float(r.correct) - float(p_correct(res["theta"], r.item.params))
     c.grade, c.theta, c.theta_se, c.skill_theta = res["grade"], res["theta"], res["se"], res["skill_theta"]
     c.grade_confirmed_at = when
     if rng.random() < 0.5:
@@ -268,12 +270,13 @@ def seed(n_candidates: int = 500, reset: bool = False) -> None:
                 db.commit()
                 print(f"  candidates: {i}")
         db.commit()
-        for key, (n, k) in stats.items():
+        for key, (n, k, resid) in stats.items():
             st = db.get(ItemFamilyStat, key)
             if st:
                 st.exposures += n
                 st.responses += n
                 st.correct += k
+                st.residual_baseline = resid / n  # the leak detector starts from the observed offset
         create_user(db, "demo.new@fsp-talent.ru", PASSWORD, "candidate", verified=True, demo=True)
         db.commit()
 

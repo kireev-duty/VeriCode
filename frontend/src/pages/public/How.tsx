@@ -38,15 +38,69 @@ interface Bank {
 }
 
 const WEIGHTS = [
-  ['Стек', 0.3, 'Покрытие обязательных и желательных навыков. Навык, подтверждённый тестом, весит больше заявленного; близкие технологии (Django ≈ FastAPI) дают частичный зачёт.'],
+  ['Стек', 0.32, 'Покрытие обязательных и желательных навыков. Навык, подтверждённый тестом, весит больше заявленного; близкие технологии (Django ≈ FastAPI) дают частичный зачёт.'],
   ['Грейд', 0.2, 'Совпадение категории с запрошенным грейдом; соседние грейды — с понижающим коэффициентом.'],
-  ['Результат теста', 0.15, 'Насколько уверенно способности кандидата на нужных навыках превышают порог грейда.'],
-  ['Достижения ФСП', 0.1, 'Уровень соревнования × результат × давность × релевантность дисциплины. Без истории ФСП — ноль, а не штраф.'],
-  ['Зарплата', 0.1, 'Ожидания кандидата относительно вилки работодателя.'],
-  ['Формат и город', 0.07, 'Офис / гибрид / удалёнка и готовность к релокации.'],
+  ['Результат теста', 0.16, 'Насколько уверенно способности кандидата на нужных навыках превышают порог грейда.'],
+  ['Достижения ФСП', 0.05, 'Уровень соревнования × результат × давность × релевантность дисциплины. Без истории ФСП — ноль, а не штраф. Внутри категории ФСП весит больше: 25% силы профиля.'],
+  ['Зарплата', 0.11, 'Ожидания кандидата относительно вилки работодателя.'],
+  ['Формат и город', 0.08, 'Офис / гибрид / удалёнка и готовность к релокации.'],
   ['Актуальность', 0.05, 'Свежесть теста и регулярных заданий.'],
   ['Описание', 0.03, 'Семантическая близость текста потребности и профиля (символьные n-граммы).'],
 ] as const
+
+
+interface ValidationSummary {
+  generated_at: string
+  test: { n: number; grade_exact: number; grade_within_1: number; self_assessment_exact: number; retest_kappa_w: number; decision_accuracy: number; items_per_attempt_mean: number; pbis_median: number; claim_bias_theta: number }
+  leak: { static_grade_up: number; cat_key_grade_up: number; cat_method_grade_up: number }
+  uniqueness: { median_collision: number }
+  matching: { table: Record<string, { 'P@10': number; 'nDCG@10': number; MRR: number }>; in_category_spearman: { full: number; no_fsp: number } }
+}
+
+function ValidationBlock() {
+  const { data } = useQuery({
+    queryKey: ['validation-summary'],
+    queryFn: async () => {
+      const r = await fetch('/validation/summary.json')
+      if (!r.ok) throw new Error('no summary')
+      return (await r.json()) as ValidationSummary
+    },
+    retry: false,
+  })
+  if (!data) return null
+  const t = data.test
+  const m = data.matching.table
+  const ours = m['Наш скоринг (полный)']
+  const kw = m['Ключевые слова (как hh)']
+  const pc = (x: number) => `${Math.round(x * 100)}%`
+  const cards: [string, string, string][] = [
+    [pc(t.grade_exact), 'грейд совпал с истинным', `самооценка кандидатов — ${pc(t.self_assessment_exact)}; ошибка ≤ 1 грейда — ${pc(t.grade_within_1)}`],
+    [t.retest_kappa_w.toFixed(2), 'каппа повторного теста', 'согласованность грейда на новых экземплярах заданий'],
+    [`${pc(data.leak.static_grade_up)} → ${pc(data.leak.cat_key_grade_up)}`, 'выигрыш от утечки ключа', 'статичный тест → наш параметрический CAT'],
+    [`${kw['P@10'].toFixed(2)} → ${ours['P@10'].toFixed(2)}`, 'точность топ-10 подборки', 'поиск по ключевым словам → наш скоринг'],
+  ]
+  return (
+    <section className="mt-16">
+      <SectionTitle label="04 · Валидация" title="Проверено на 3000 синтетических кандидатах с известной «скрытой истиной»" />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {cards.map(([v, l, h]) => (
+          <Card key={l}>
+            <div className="text-2xl font-semibold text-brand-600">{v}</div>
+            <div className="mt-1 text-sm font-medium">{l}</div>
+            <div className="mt-1 text-xs text-muted">{h}</div>
+          </Card>
+        ))}
+      </div>
+      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+        <Card className="p-3"><img src="/validation/test_accuracy.png" alt="Точность грейда" className="w-full" /></Card>
+        <Card className="p-3"><img src="/validation/matching.png" alt="Качество подбора" className="w-full" /></Card>
+      </div>
+      <p className="mt-3 text-sm text-muted">
+        Код валидации вызывает те же модули, что работают в продукте. Полный отчёт с методикой и ограничениями — docs/validation/report.md в репозитории ({data.generated_at}).
+      </p>
+    </section>
+  )
+}
 
 export function How() {
   const [text, setText] = useState(SAMPLES[0].text)
@@ -190,7 +244,7 @@ export function How() {
                     <span>{t}</span>
                     <span className="font-mono text-brand-600">{Math.round(w * 100)}%</span>
                   </div>
-                  <ProgressBar value={w / 0.3} className="mt-1" />
+                  <ProgressBar value={w / 0.32} className="mt-1" />
                   <div className="mt-1 text-xs text-muted">{d}</div>
                 </div>
               ))}
@@ -219,6 +273,7 @@ export function How() {
           </Card>
         </div>
       </section>
+      <ValidationBlock />
     </div>
   )
 }

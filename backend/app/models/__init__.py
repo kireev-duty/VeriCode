@@ -144,7 +144,8 @@ class ItemFamilyStat(Base):
     exposures: Mapped[int] = mapped_column(Integer, default=0)
     responses: Mapped[int] = mapped_column(Integer, default=0)
     correct: Mapped[int] = mapped_column(Integer, default=0)
-    residual_cusum: Mapped[float] = mapped_column(Float, default=0)  # leak detector state
+    residual_cusum: Mapped[float] = mapped_column(Float, default=0)  # leak detector state (see assessment/leak.py)
+    residual_baseline: Mapped[float] = mapped_column(Float, default=0)
     status: Mapped[str] = mapped_column(String(20), default="active")  # active | flagged | retired
     flagged_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
 

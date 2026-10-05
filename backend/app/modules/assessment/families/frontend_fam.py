@@ -167,10 +167,10 @@ def js_arrays(rng: random.Random, tier: int) -> Instance:
         {2: Tier(0.2, 1.6, 120), 3: Tier(1.1, 1.6, 120)})
 def js_closures(rng: random.Random, tier: int) -> Instance:
     if tier == 2:
-        n, k = rng.randint(3, 4), rng.randint(1, 3)
+        n, k, b = rng.randint(2, 5), rng.randint(1, 4), rng.randint(0, 3)
         kw = rng.choice(["var", "let"])
-        code = f"for ({kw} i = 0; i < {n}; i++) {{\n  setTimeout(() => console.log(i * {k}), 0);\n}}"
-        vals = [n * k] * n if kw == "var" else [i * k for i in range(n)]
+        code = f"for ({kw} i = {b}; i < {b + n}; i++) {{\n  setTimeout(() => console.log(i * {k}), 0);\n}}"
+        vals = [(b + n) * k] * n if kw == "var" else [i * k for i in range(b, b + n)]
         return Instance(prompt="Что будет выведено? Запишите значения через пробел.", kind="text",
                         answer=" ".join(map(str, vals)), code=code, lang="javascript")
     v = rng.choice(["count", "total", "user"])

@@ -4,6 +4,7 @@ import random
 from datetime import timedelta
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.catalog import GRADE_BY_ID, GRADES, SPEC_BY_ID, grade_index
@@ -17,15 +18,12 @@ from app.models import (
     ItemFamilyStat,
     Vacancy,
 )
-from app.modules.assessment import cat
+from app.modules.assessment import cat, leak
 from app.modules.assessment.families import REGISTRY, check
 from app.modules.assessment.irt import p_correct
 
 TIME_GRACE_S = 15
 UPGRADE_WINDOW_DAYS = 7
-LEAK_K = 0.15  # CUSUM allowance per response
-LEAK_H = 3.0  # CUSUM decision threshold
-LEAK_MIN_RESPONSES = 20
 
 
 class AssessmentError(Exception):
@@ -39,13 +37,17 @@ class AssessmentError(Exception):
 
 
 def ensure_item_stats(db: Session) -> None:
+    """Creates calibration rows for new item slots. Several workers may start at once: a lost race is fine."""
     existing = set(db.scalars(select(ItemFamilyStat.item_key)))
     for fam in REGISTRY.values():
         for tier, t in fam.tiers.items():
             key = fam.item_key(tier)
             if key not in existing:
                 db.add(ItemFamilyStat(item_key=key, a=t.a, b=t.b))
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
 
 
 def load_bank(db: Session) -> list[cat.BankItem]:
@@ -279,8 +281,8 @@ def finish(db: Session, session: AssessmentSession, responses: list[cat.Response
 
 
 def update_leak_detector(db: Session, session: AssessmentSession, theta: float) -> None:
-    """CUSUM on residuals (observed - expected correctness). A family whose answers become correct more often
-    than the respondents' ability predicts is flagged: a sign that it (or its solving trick) has leaked."""
+    """A slot whose answers become correct more often than the respondents' ability predicts (relative to the slot's
+    own baseline) is flagged and leaves rotation: a sign that it, or the trick to solve it, has leaked."""
     bank = {b.key: b for b in load_bank(db)}
     for it in session.items:
         if it.is_correct is None:
@@ -290,9 +292,11 @@ def update_leak_detector(db: Session, session: AssessmentSession, theta: float) 
             continue
         c = bank[it.item_key].params.c if it.item_key in bank else 0.0
         expected = float(p_correct(theta, cat.ItemParams(it.a, it.b, c)))
-        stat.responses += 1
+        state = leak.LeakState(n=stat.responses, baseline=stat.residual_baseline or 0.0, cusum=stat.residual_cusum)
+        flagged = leak.step(state, float(bool(it.is_correct)) - expected)
+        stat.responses = state.n
         stat.correct += int(bool(it.is_correct))
-        stat.residual_cusum = max(0.0, stat.residual_cusum + (float(it.is_correct) - expected) - LEAK_K)
-        if stat.status == "active" and stat.responses >= LEAK_MIN_RESPONSES and stat.residual_cusum > LEAK_H:
+        stat.residual_baseline, stat.residual_cusum = state.baseline, state.cusum
+        if flagged and stat.status == "active":
             stat.status = "flagged"
             stat.flagged_at = utcnow()

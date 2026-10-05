@@ -1,0 +1,168 @@
+{
+  "generated_at": "2026-10-05 09:02 UTC",
+  "test": {
+    "n": 3000,
+    "seconds": 76.7,
+    "grade_exact": 0.775,
+    "grade_within_1": 1.0,
+    "over_graded": 0.086,
+    "under_graded": 0.139,
+    "self_assessment_exact": 0.634,
+    "self_assessment_over": 0.24,
+    "theta_corr": 0.907,
+    "theta_rmse": 0.401,
+    "items_per_attempt_mean": 17.1,
+    "items_total_mean": 27.7,
+    "attempts_mean": 1.6,
+    "claim_bias_theta": -0.045,
+    "claim_bias_ci95": 0.053,
+    "claim_vs_retest_sd": [
+      0.545,
+      0.476
+    ],
+    "decision_accuracy": 0.829,
+    "retest_exact": 0.767,
+    "retest_kappa_w": 0.846,
+    "retest_theta_r": 0.866,
+    "pbis_median": 0.429,
+    "pbis_share_ge_0_2": 1.0,
+    "max_exposure_rate": 0.634,
+    "items_used": 92,
+    "items_in_bank": 92,
+    "confusion": [
+      [
+        297,
+        115,
+        0,
+        0
+      ],
+      [
+        91,
+        830,
+        107,
+        0
+      ],
+      [
+        0,
+        203,
+        867,
+        36
+      ],
+      [
+        0,
+        0,
+        124,
+        330
+      ]
+    ],
+    "admin_total": 52641
+  },
+  "leak": {
+    "static_theta_gain": 0.556,
+    "static_grade_up": 0.542,
+    "cat_key_theta_gain": 0.0,
+    "cat_key_grade_up": 0.0,
+    "cat_method_theta_gain": 0.239,
+    "cat_method_grade_up": 0.237,
+    "detector_false_positive_rate": 0.037,
+    "detector_power_30": 0.647,
+    "detector_delay_30": 40,
+    "detector_power_50": 0.797,
+    "detector_delay_50": 21
+  },
+  "uniqueness": {
+    "slots": 92,
+    "median_collision": 0.0025,
+    "mean_collision": 0.0076,
+    "share_slots_collision_lt_1pct": 0.783,
+    "worst": [
+      {
+        "item": "cron_schedule:1",
+        "distinct": 20,
+        "collision": 0.0522,
+        "top_answer_share": 0.1425,
+        "kind": "number"
+      },
+      {
+        "item": "linux_perms:2",
+        "distinct": 24,
+        "collision": 0.0445125,
+        "top_answer_share": 0.13,
+        "kind": "text"
+      },
+      {
+        "item": "py_classes:3",
+        "distinct": 24,
+        "collision": 0.043625000000000004,
+        "top_answer_share": 0.055,
+        "kind": "text"
+      },
+      {
+        "item": "stats_basic:2",
+        "distinct": 25,
+        "collision": 0.0419375,
+        "top_answer_share": 0.085,
+        "kind": "number"
+      },
+      {
+        "item": "stats_basic:3",
+        "distinct": 36,
+        "collision": 0.030625,
+        "top_answer_share": 0.095,
+        "kind": "number"
+      }
+    ],
+    "median_top_answer_share": 0.188
+  },
+  "matching": {
+    "candidates": 900,
+    "vacancies": 40,
+    "relevant_per_vacancy_median": 51,
+    "table": {
+      "Ключевые слова (как hh)": {
+        "P@10": 0.632,
+        "nDCG@10": 0.569,
+        "MRR": 0.848
+      },
+      "BM25 по тексту резюме": {
+        "P@10": 0.395,
+        "nDCG@10": 0.327,
+        "MRR": 0.632
+      },
+      "Наш скоринг без теста (самооценка)": {
+        "P@10": 0.745,
+        "nDCG@10": 0.63,
+        "MRR": 0.893
+      },
+      "Наш скоринг без ФСП": {
+        "P@10": 0.848,
+        "nDCG@10": 0.75,
+        "MRR": 0.931
+      },
+      "Наш скоринг (полный)": {
+        "P@10": 0.835,
+        "nDCG@10": 0.748,
+        "MRR": 0.917
+      }
+    },
+    "in_category_spearman": {
+      "full": 0.577,
+      "no_fsp": 0.55,
+      "fsp_only": 0.226
+    },
+    "categories": 20
+  },
+  "nlp": {
+    "cases": 68,
+    "handwritten": 8,
+    "skills_precision": 0.997,
+    "skills_recall": 1.0,
+    "skills_f1": 0.998,
+    "specialization_acc": 1.0,
+    "grade_acc": 1.0,
+    "salary_acc": 1.0,
+    "format_acc": 1.0,
+    "handwritten_skills_f1": 0.986,
+    "handwritten_spec_acc": 1.0
+  }
+}

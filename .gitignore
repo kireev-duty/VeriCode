@@ -23,3 +23,4 @@ validation/out/
 *.docx
 !backend/tests/fixtures/*.pdf
 брендбук/
+!docs/*.pdf

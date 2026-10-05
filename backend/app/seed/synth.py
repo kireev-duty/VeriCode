@@ -137,7 +137,8 @@ def make_candidate(rng: random.Random, spec: str | None = None, idx: int = 0) ->
     roles = ["Разработчик"]
     if theta > 0.8 and rng.random() < 0.5:
         roles.append(rng.choice(["Тимлид", "Ментор", "Архитектор"]))
-    fsp_id = f"FSP-{100001 + idx * 7:06d}" if rng.random() < 0.4 else None
+    # competitive programmers are on average somewhat stronger: participation correlates with ability
+    fsp_id = f"FSP-{100001 + idx * 7:06d}" if rng.random() < min(0.75, max(0.1, 0.38 + 0.15 * theta)) else None
     if fsp_id and fsp_id.endswith("0"):
         fsp_id = fsp_id[:-1] + "1"
     return SynthCandidate(
@@ -158,9 +159,12 @@ def true_params(bank: list[cat.BankItem], rng: random.Random, noise_b: float = 0
 
 
 def run_test(rng: random.Random, c: SynthCandidate, bank: list[cat.BankItem], truth: dict[str, ItemParams],
-             target: str, blueprint: dict[str, float], leaked: set[str] | None = None) -> tuple[cat.Decision, list]:
-    """Simulates one adaptive test session. leaked: item keys whose answers the candidate knows in advance."""
-    responses: list[cat.Response] = []
+             target: str, blueprint: dict[str, float], leaked: set[str] | None = None,
+             carry: list | None = None) -> tuple[cat.Decision, list]:
+    """Simulates one adaptive test session. leaked: item keys whose answers the candidate knows in advance;
+    carry: responses of the previous attempt of the same measurement episode (continued, not repeated)."""
+    carry = list(carry or [])
+    responses: list[cat.Response] = list(carry)
     while True:
         it = cat.select_next(bank, blueprint, responses, cat.selection_theta(responses, target), rng)
         if it is None:
@@ -171,25 +175,42 @@ def run_test(rng: random.Random, c: SynthCandidate, bank: list[cat.BankItem], tr
             th = c.skill_theta.get(it.skill, c.theta)
             ok = rng.random() < float(p_correct(th, truth[it.key]))
         responses.append(cat.Response(it, ok))
-        if cat.should_stop(responses, target):
+        if cat.should_stop(responses, target, new_count=len(responses) - len(carry) if carry else None):
             break
     return cat.decide(responses, target), responses
 
 
-def assign_grade(rng: random.Random, c: SynthCandidate, bank, truth) -> dict:
-    """Candidate flow per policy: test on the declared grade, if not confirmed - immediately one grade lower,
-    until a grade is confirmed (intern always is)."""
+CARRY_OVER = False  # evaluated alternative: -22% items, -5 pp grade accuracy (docs/validation)
+
+
+def assign_grade(rng: random.Random, c: SynthCandidate, bank, truth, carry_over: bool | None = None) -> dict:
+    """Candidate flow per policy: test on the declared grade; if not confirmed - immediately one grade lower until
+    a grade is confirmed (intern always is); if confirmed with margin ("upgrade_available") - the candidate takes
+    the offered test one grade higher and keeps it if confirmed. Follow-up attempts of the same episode continue
+    the measurement (previous answers count), as the service does."""
+    carry_over = CARRY_OVER if carry_over is None else carry_over
     bp = cat.blueprint_for_specialization(SPEC_BY_ID[c.spec].core_skills, [s["id"] for s in c.skills], bank)
     target = c.declared_grade
     attempts = []
+    best = None
+    going_up = False
+    prev: list = []
     while True:
-        d, resp = run_test(rng, c, bank, truth, target, bp)
-        attempts.append({"target": target, "outcome": d.outcome, "theta": d.theta, "se": d.se, "items": len(resp),
+        d, resp = run_test(rng, c, bank, truth, target, bp, carry=prev if carry_over else None)
+        attempts.append({"target": target, "outcome": d.outcome, "theta": d.theta, "se": d.se,
+                         "items": len(resp) - (len(prev) if carry_over else 0),
                          "p_target": d.p_target, "skill_theta": d.skill_theta})
+        prev = resp
         if d.grade is not None:
-            return {"grade": d.grade, "theta": d.theta, "se": d.se, "skill_theta": d.skill_theta,
-                    "attempts": attempts, "blueprint": bp, "responses": resp}
+            best = {"grade": d.grade, "theta": d.theta, "se": d.se, "skill_theta": d.skill_theta, "responses": resp}
+            if d.outcome == "upgrade_available" and d.suggested_grade:
+                target, going_up = d.suggested_grade, True
+                continue
+            break
+        if going_up:  # the higher test was not confirmed: the previous grade stays
+            break
         target = GRADE_ORDER[GRADE_ORDER.index(target) - 1]
+    return {**best, "attempts": attempts, "blueprint": bp}
 
 
 # ------------------------------------------------------------------------------------------------ vacancies

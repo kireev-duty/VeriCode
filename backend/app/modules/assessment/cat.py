@@ -25,7 +25,8 @@ MAX_ITEMS = 18
 SE_STOP = 0.33
 RANDOMESQUE_K = 3
 MAX_PER_FAMILY = 2
-CONFIRM_P = 0.7  # posterior probability required to confirm a grade
+CARRY_MIN_NEW = 5  # a follow-up attempt adds at least this many new items
+CONFIRM_P = 0.6  # posterior probability required to confirm a grade (tuned in validation)
 SKILL_PRIOR_SD = 0.6
 
 
@@ -151,11 +152,14 @@ def _thresholds(target_grade: str) -> tuple[float, float | None]:
     return thr, up
 
 
-def should_stop(responses: list[Response], target_grade: str) -> bool:
+def should_stop(responses: list[Response], target_grade: str, new_count: int | None = None) -> bool:
+    """new_count: items added in a follow-up attempt that continues a previous measurement (carry-over).
+    Such an attempt adds at least CARRY_MIN_NEW items targeted at the new grade and at most MAX_ITEMS."""
     n = len(responses)
-    if n >= MAX_ITEMS:
+    k = n if new_count is None else new_count
+    if k >= MAX_ITEMS:
         return True
-    if n < MIN_ITEMS:
+    if n < MIN_ITEMS or (new_count is not None and new_count < CARRY_MIN_NEW):
         return False
     pairs = [(r.item.params, r.correct) for r in responses]
     _, se = eap(pairs)
