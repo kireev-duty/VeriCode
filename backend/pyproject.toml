@@ -1,0 +1,40 @@
+[project]
+name = "fsp-talent"
+version = "0.1.0"
+description = "FSP Talent: reverse-matching IT hiring platform with adaptive grade testing"
+requires-python = ">=3.12"
+dependencies = [
+    "alembic>=1.20.0",
+    "argon2-cffi>=25.1.0",
+    "email-validator>=2.3.0",
+    "fastapi>=0.142.2",
+    "httpx>=0.28.1",
+    "numpy>=2.5.3",
+    "psycopg[binary]>=3.3.6",
+    "pydantic-settings>=2.15.0",
+    "pyjwt>=2.15.1",
+    "pymupdf>=1.28.2",
+    "python-multipart>=0.0.32",
+    "qrcode>=8.2",
+    "reportlab>=5.0.1",
+    "sqlalchemy>=2",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "ruff>=0.16.10",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = ["B008", "B905", "E501"]  # FastAPI File() defaults are idiomatic; long lines are formatter territory
