@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-10-07 06:38 UTC",
+  "generated_at": "2026-10-07 07:59 UTC",
   "test": {
     "n": 3000,
-    "seconds": 67.4,
+    "seconds": 136.4,
     "grade_exact": 0.767,
     "grade_within_1": 1.0,
     "over_graded": 0.088,
@@ -512,7 +512,7 @@
   },
   "nlp": {
     "llm": true,
-    "llm_provider": "gigachat",
+    "llm_provider": "gigachat,local",
     "templates": {
       "rules": {
         "cases": 68,
@@ -540,13 +540,13 @@
       },
       "rules+llm": {
         "cases": 40,
-        "skills_precision": 0.966,
+        "skills_precision": 0.949,
         "skills_recall": 0.988,
-        "skills_f1": 0.977,
-        "must_nice_acc": 0.976,
+        "skills_f1": 0.968,
+        "must_nice_acc": 0.964,
         "specialization_acc": 1.0,
         "grade_acc": 1.0,
-        "salary_acc": 0.975,
+        "salary_acc": 0.95,
         "format_acc": 1.0
       }
     },
@@ -564,22 +564,102 @@
       },
       "rules+llm": {
         "cases": 20,
-        "skills_precision": 0.923,
-        "skills_recall": 0.923,
-        "skills_f1": 0.923,
+        "skills_precision": 0.924,
+        "skills_recall": 0.936,
+        "skills_f1": 0.93,
         "must_nice_acc": 1.0,
         "specialization_acc": 1.0,
         "grade_acc": 0.938,
-        "salary_acc": 1.0,
+        "salary_acc": 0.95,
         "format_acc": 1.0
       }
     },
     "handwritten": 8
   },
   "human": {
-    "version": "5ca34e9f2a39",
+    "version": "20331c687ad0",
     "pairs": 100,
-    "labelers": 0
+    "labelers": 3,
+    "rel_dist": {
+      "Человек 1": [
+        16,
+        20,
+        29,
+        31
+      ],
+      "Человек 2": [
+        10,
+        40,
+        35,
+        13
+      ],
+      "Человек 3": [
+        9,
+        35,
+        38,
+        18
+      ]
+    },
+    "labeled_pairs": 100,
+    "systems": {
+      "Ключевые слова (как hh)": {
+        "nDCG": 0.876,
+        "nDCG_ci": [
+          0.83,
+          0.917
+        ],
+        "P@3": 0.4,
+        "spearman": -0.028
+      },
+      "BM25 по тексту резюме": {
+        "nDCG": 0.851,
+        "nDCG_ci": [
+          0.798,
+          0.9
+        ],
+        "P@3": 0.367,
+        "spearman": -0.127
+      },
+      "Наш скоринг без теста (самооценка)": {
+        "nDCG": 0.849,
+        "nDCG_ci": [
+          0.792,
+          0.906
+        ],
+        "P@3": 0.333,
+        "spearman": -0.0
+      },
+      "Наш скоринг без ФСП": {
+        "nDCG": 0.835,
+        "nDCG_ci": [
+          0.777,
+          0.898
+        ],
+        "P@3": 0.4,
+        "spearman": 0.009
+      },
+      "Наш скоринг (полный)": {
+        "nDCG": 0.857,
+        "nDCG_ci": [
+          0.796,
+          0.915
+        ],
+        "P@3": 0.4,
+        "spearman": 0.047
+      }
+    },
+    "vacancies": 10,
+    "pool_relevant_share": 0.35,
+    "truth_kappa_w": 0.027,
+    "truth_exact": 0.26,
+    "truth_within_1": 0.73,
+    "inter_annotator_kappa_w": -0.076,
+    "inter_annotator_kappa_pairs": [
+      -0.214,
+      0.004,
+      -0.017
+    ],
+    "inter_annotator_within_1": 0.69
   },
   "resume": {
     "dev": {

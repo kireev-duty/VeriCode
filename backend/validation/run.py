@@ -803,19 +803,15 @@ def human_section(bank, truth) -> dict:
 
     The pool of each vacancy is fixed and mixes the systems' picks with random candidates, so the systems are
     compared on how they *order* the same 10 candidates (pooled evaluation)."""
-    from validation.labeling import build_pairs, pair_index
+    from validation.labeling import frozen_pairs, pair_index, read_labels
 
     world = build_world(bank, truth)
-    pairs = build_pairs(world)
-    files = sorted((OUT / "labels").glob("*.json"))
-    labelers = {}
-    for f in files:
-        d = json.loads(f.read_text(encoding="utf-8"))
-        if d.get("version") == pairs["version"] and d.get("labels"):
-            labelers[d.get("labeler") or f.stem] = {k: int(v["rel"]) for k, v in d["labels"].items()}
+    pairs = frozen_pairs(world)
+    labelers = read_labels(pairs["version"])
     out: dict = {"version": pairs["version"], "pairs": pairs["pairs"], "labelers": len(labelers)}
     if not labelers:
         return out
+    out["rel_dist"] = {name: [sum(1 for r in lab.values() if r == k) for k in range(4)] for name, lab in labelers.items()}
     by_pair: dict[str, list[int]] = {}
     for lab in labelers.values():
         for pid, rel in lab.items():
@@ -859,14 +855,18 @@ def human_section(bank, truth) -> dict:
 
     names = list(labelers)
     if len(names) >= 2:
-        ks = []
+        ks, within = [], []
         for i in range(len(names)):
             for j in range(i + 1, len(names)):
-                common = sorted(set(labelers[names[i]]) & set(labelers[names[j]]))
+                a, b = labelers[names[i]], labelers[names[j]]
+                common = sorted(set(a) & set(b))
                 if len(common) >= 20:
-                    ks.append(kappa([labelers[names[i]][p] for p in common], [labelers[names[j]][p] for p in common], 4))
+                    ks.append(kappa([a[p] for p in common], [b[p] for p in common], 4))
+                    within.append(float(np.mean([abs(a[p] - b[p]) <= 1 for p in common])))
         if ks:
             out["inter_annotator_kappa_w"] = round(float(np.mean(ks)), 3)
+            out["inter_annotator_kappa_pairs"] = [round(k, 3) for k in ks]
+            out["inter_annotator_within_1"] = round(float(np.mean(within)), 3)
     return out
 
 
@@ -1014,13 +1014,13 @@ def pct(x: float) -> str:
 
 
 def human_block(h: dict) -> str:
-    head = """## 8. Экспертная разметка пар «вакансия – кандидат»
+    head = """## 8. Разметка пар «вакансия – кандидат» людьми
 
-Синтетическая релевантность из раздела 6 задана правилами, поэтому её проверяет человек. Из того же тестового набора
+Синтетическая релевантность из раздела 6 задана правилами, поэтому её проверяют люди. Из того же тестового набора
 взяты 10 вакансий (по две на специализацию) и по 10 кандидатов на каждую. Пул собран так, чтобы не подыгрывать нашей
 системе: топ-3 нашего скоринга, топ-3 поиска по ключевым словам, топ-2 BM25, остальные случайные из специализации, в
-перемешанном порядке. Эксперт видит вакансию и профиль кандидата (стек, опыт, результат теста по навыкам, ФСП, ожидания)
-и ставит оценку 0–3. **Оценок системы он не видит.** Форма: `docs/validation/labeling/index.html`
+перемешанном порядке. Разметчик видит вакансию и профиль кандидата (стек, опыт, результат теста по навыкам, ФСП,
+ожидания) и ставит оценку 0–3. **Оценок системы он не видит.** Форма: `docs/validation/labeling/index.html`
 (пересобирается командой `uv run python -m validation.labeling`), ответы: `docs/validation/labels/*.json`.
 """
     if not h.get("labelers"):
@@ -1029,21 +1029,41 @@ def human_block(h: dict) -> str:
 """
     rows = "\n".join(f"| {name} | {v['nDCG']:.3f} ({v['nDCG_ci'][0]:.2f}–{v['nDCG_ci'][1]:.2f}) | {v['P@3']:.3f} "
                      f"| {v['spearman']:.3f} |" for name, v in h["systems"].items())
-    inter = (f"| Согласие экспертов между собой (взвешенная каппа) | {h['inter_annotator_kappa_w']} |\n"
-             if "inter_annotator_kappa_w" in h else "")
-    return head + f"""
-Разметчиков: {h['labelers']}, размечено пар: {h['labeled_pairs']} ({h['vacancies']} вакансий). Доля подходящих
-(оценка ≥ 2) в пуле — {pct(h['pool_relevant_share'])}. Системы сравниваются по тому, как они упорядочивают один и тот же пул.
+    text = head + f"""
+Набор версии `{h['version']}`. Разметчиков: {h['labelers']}, каждый размечал независимо; размечено пар:
+{h['labeled_pairs']} ({h['vacancies']} вакансий). Оценка пары — среднее по разметчикам. Доля подходящих (оценка ≥ 2)
+в пуле — {pct(h['pool_relevant_share'])}. Системы сравниваются по тому, как они упорядочивают один и тот же пул.
+"""
+    if "inter_annotator_kappa_w" in h:
+        dist = "\n".join(f"| {name} | " + " | ".join(map(str, d)) + " |" for name, d in h["rel_dist"].items())
+        pairs_k = ", ".join(f"{k:+.2f}" for k in h["inter_annotator_kappa_pairs"])
+        text += f"""
+**Согласие разметчиков между собой.** Взвешенная каппа {h['inter_annotator_kappa_w']:+.2f} (по парам разметчиков:
+{pairs_k}); оценки расходятся не больше чем на балл в {pct(h['inter_annotator_within_1'])} случаев.
 
-| Система | nDCG пула (95% ДИ) | P@3 | ρ Спирмена с оценкой эксперта |
+| Разметчик | «0» | «1» | «2» | «3» |
+|---|---|---|---|---|
+{dist}
+"""
+        if h["inter_annotator_kappa_w"] < 0.2:
+            text += """
+**Ограничение.** Согласие на уровне случайности: разметчики по-разному понимают шкалу 0–3 (у них разная строгость,
+это видно по распределению оценок) и по-разному взвешивают опыт, стек, грейд и ожидания. Средняя оценка при таком
+согласии — шум, поэтому **выводов о качестве ранжирования по этой разметке мы не делаем**: таблицы ниже приведены для
+полноты, различия систем в них не значимы. Качество подбора подтверждено в разделе 6 на синтетической разметке.
+Следующий шаг — рубрика с примерами для каждой оценки и калибровка разметчиков на 10 общих парах до основной разметки;
+форма и пул для этого готовы.
+"""
+    return text + f"""
+| Система | nDCG пула (95% ДИ) | P@3 | ρ Спирмена со средней оценкой |
 |---|---|---|---|
 {rows}
 
 | Проверка синтетической разметки | Значение |
 |---|---|
-| Совпадение оценки эксперта с синтетической релевантностью | {pct(h['truth_exact'])} (±1 балл — {pct(h['truth_within_1'])}) |
-| Взвешенная каппа «эксперт — синтетика» | {h['truth_kappa_w']} |
-{inter}"""
+| Совпадение средней оценки разметчиков с синтетической релевантностью | {pct(h['truth_exact'])} (±1 балл — {pct(h['truth_within_1'])}) |
+| Взвешенная каппа «разметчики — синтетика» | {h['truth_kappa_w']} |
+"""
 
 
 def ci(c) -> str:

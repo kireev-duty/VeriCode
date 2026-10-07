@@ -3,13 +3,15 @@
 Builds ~100 "vacancy - candidate" pairs from the same synthetic test set as the matching section of the report
 (validation.run.build_world) and writes a self-contained form docs/validation/labeling/index.html. An expert rates
 each pair 0-3 without seeing any system's score and downloads a JSON file; files put into docs/validation/labels/
-are picked up by `validation.run` (section "Экспертная разметка").
+are picked up by `validation.run` (section "Экспертная разметка"), which reads the published pairs.json rather
+than rebuilding the set, so later scoring changes do not orphan the labels.
 
 Pooling (as in TREC evaluations), so that the set does not favour our system: for every vacancy the pool is the
 top-3 of our scoring, the top-3 of the keyword baseline, the top-2 of BM25, and random candidates of the same
 specialization up to POOL_SIZE; the order within a vacancy is shuffled.
 """
 
+import argparse
 import hashlib
 import json
 import random
@@ -27,6 +29,8 @@ VACANCIES_PER_SPEC = 2
 POOL_SIZE = 10
 POOL_PLAN = (("full", 3), ("keywords", 3), ("bm25", 2))
 LABELING_DIR = OUT / "labeling"
+PAIRS_FILE = LABELING_DIR / "pairs.json"
+LABELS_DIR = OUT / "labels"
 TEMPLATE = Path(__file__).with_name("labeling_form.html")
 
 
@@ -101,20 +105,46 @@ def build_pairs(world: dict) -> dict:
     return {"version": version, "pairs": len(ids), "groups": groups}
 
 
+def frozen_pairs(world: dict) -> dict:
+    """The set the labelers actually saw. The pool depends on the scoring, so a later scoring change would rebuild
+    a slightly different set and silently invalidate the labels; the published pairs.json is the source of truth."""
+    if PAIRS_FILE.exists():
+        return json.loads(PAIRS_FILE.read_text(encoding="utf-8"))
+    return build_pairs(world)
+
+
+def read_labels(version: str, labels_dir: Path = LABELS_DIR) -> dict[str, dict[str, int]]:
+    """{labeler: {pair_id: rel}} from the form's JSON files of this version; files of other versions are skipped."""
+    labelers = {}
+    for f in sorted(labels_dir.glob("*.json")):
+        d = json.loads(f.read_text(encoding="utf-8"))
+        if d.get("version") == version and d.get("labels"):
+            labelers[d.get("labeler") or f.stem] = {k: int(v["rel"]) for k, v in d["labels"].items()}
+    return labelers
+
+
 def pair_index(pair_id: str) -> tuple[int, int]:
     v, c = pair_id.split("-")
     return int(v[1:]), int(c[1:])
 
 
 def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--force", action="store_true", help="rebuild the form even if labels of another version exist")
+    args = ap.parse_args()
     bank = cat.build_bank()
     truth = synth.true_params(bank, random.Random(7))
     world = build_world(bank, truth)
     data = build_pairs(world)
     LABELING_DIR.mkdir(parents=True, exist_ok=True)
-    (OUT / "labels").mkdir(exist_ok=True)
+    LABELS_DIR.mkdir(exist_ok=True)
+    if PAIRS_FILE.exists() and not args.force:
+        old = json.loads(PAIRS_FILE.read_text(encoding="utf-8"))["version"]
+        if old != data["version"] and read_labels(old):
+            raise SystemExit(f"labels of version {old} exist in {LABELS_DIR}; the new set {data['version']} would "
+                             "orphan them (use --force to rebuild anyway)")
     payload = json.dumps(data, ensure_ascii=False)
-    (LABELING_DIR / "pairs.json").write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+    PAIRS_FILE.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
     html = TEMPLATE.read_text(encoding="utf-8").replace("__PAIRS_JSON__", payload.replace("</", "<\\/"))
     (LABELING_DIR / "index.html").write_text(html, encoding="utf-8")
     print(f"{data['pairs']} pairs, version {data['version']} -> {LABELING_DIR / 'index.html'}")

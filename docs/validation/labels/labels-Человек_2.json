@@ -1,0 +1,399 @@
+{
+ "version": "20331c687ad0",
+ "labeler": "Человек 2",
+ "exported_at": "2026-10-07T07:33:42.173Z",
+ "labels": {
+  "v0-c639": {
+   "rel": 0,
+   "comment": ""
+  },
+  "v0-c426": {
+   "rel": 3,
+   "comment": ""
+  },
+  "v0-c106": {
+   "rel": 3,
+   "comment": ""
+  },
+  "v0-c799": {
+   "rel": 3,
+   "comment": ""
+  },
+  "v0-c366": {
+   "rel": 3,
+   "comment": ""
+  },
+  "v0-c62": {
+   "rel": 2,
+   "comment": ""
+  },
+  "v0-c42": {
+   "rel": 1,
+   "comment": ""
+  },
+  "v0-c736": {
+   "rel": 1,
+   "comment": ""
+  },
+  "v0-c569": {
+   "rel": 1,
+   "comment": ""
+  },
+  "v0-c234": {
+   "rel": 1,
+   "comment": ""
+  },
+  "v1-c828": {
+   "rel": 1,
+   "comment": ""
+  },
+  "v1-c802": {
+   "rel": 1,
+   "comment": ""
+  },
+  "v1-c705": {
+   "rel": 1,
+   "comment": ""
+  },
+  "v1-c447": {
+   "rel": 1,
+   "comment": ""
+  },
+  "v1-c70": {
+   "rel": 2,
+   "comment": ""
+  },
+  "v1-c358": {
+   "rel": 2,
+   "comment": ""
+  },
+  "v1-c553": {
+   "rel": 2,
+   "comment": ""
+  },
+  "v1-c93": {
+   "rel": 2,
+   "comment": ""
+  },
+  "v1-c293": {
+   "rel": 2,
+   "comment": ""
+  },
+  "v1-c823": {
+   "rel": 2,
+   "comment": ""
+  },
+  "v2-c307": {
+   "rel": 2,
+   "comment": ""
+  },
+  "v2-c311": {
+   "rel": 2,
+   "comment": ""
+  },
+  "v2-c899": {
+   "rel": 2,
+   "comment": ""
+  },
+  "v2-c770": {
+   "rel": 2,
+   "comment": ""
+  },
+  "v2-c751": {
+   "rel": 2,
+   "comment": ""
+  },
+  "v2-c8": {
+   "rel": 2,
+   "comment": ""
+  },
+  "v2-c506": {
+   "rel": 2,
+   "comment": ""
+  },
+  "v2-c833": {
+   "rel": 2,
+   "comment": ""
+  },
+  "v2-c670": {
+   "rel": 1,
+   "comment": ""
+  },
+  "v3-c829": {
+   "rel": 1,
+   "comment": ""
+  },
+  "v3-c249": {
+   "rel": 1,
+   "comment": ""
+  },
+  "v3-c552": {
+   "rel": 1,
+   "comment": ""
+  },
+  "v3-c222": {
+   "rel": 1,
+   "comment": ""
+  },
+  "v3-c322": {
+   "rel": 1,
+   "comment": ""
+  },
+  "v3-c78": {
+   "rel": 2,
+   "comment": ""
+  },
+  "v3-c474": {
+   "rel": 1,
+   "comment": ""
+  },
+  "v3-c858": {
+   "rel": 2,
+   "comment": ""
+  },
+  "v3-c621": {
+   "rel": 1,
+   "comment": ""
+  },
+  "v3-c630": {
+   "rel": 1,
+   "comment": ""
+  },
+  "v4-c882": {
+   "rel": 2,
+   "comment": ""
+  },
+  "v4-c327": {
+   "rel": 1,
+   "comment": ""
+  },
+  "v4-c116": {
+   "rel": 2,
+   "comment": ""
+  },
+  "v4-c598": {
+   "rel": 1,
+   "comment": ""
+  },
+  "v4-c185": {
+   "rel": 2,
+   "comment": ""
+  },
+  "v4-c97": {
+   "rel": 1,
+   "comment": ""
+  },
+  "v4-c413": {
+   "rel": 2,
+   "comment": ""
+  },
+  "v4-c380": {
+   "rel": 1,
+   "comment": ""
+  },
+  "v4-c331": {
+   "rel": 2,
+   "comment": ""
+  },
+  "v5-c481": {
+   "rel": 1,
+   "comment": ""
+  },
+  "v5-c386": {
+   "rel": 2,
+   "comment": ""
+  },
+  "v5-c689": {
+   "rel": 1,
+   "comment": ""
+  },
+  "v5-c712": {
+   "rel": 2,
+   "comment": ""
+  },
+  "v5-c176": {
+   "rel": 1,
+   "comment": ""
+  },
+  "v5-c893": {
+   "rel": 2,
+   "comment": ""
+  },
+  "v5-c130": {
+   "rel": 1,
+   "comment": ""
+  },
+  "v5-c87": {
+   "rel": 1,
+   "comment": ""
+  },
+  "v5-c691": {
+   "rel": 1,
+   "comment": ""
+  },
+  "v5-c639": {
+   "rel": 1,
+   "comment": ""
+  },
+  "v6-c605": {
+   "rel": 1,
+   "comment": ""
+  },
+  "v6-c160": {
+   "rel": 1,
+   "comment": ""
+  },
+  "v6-c754": {
+   "rel": 1,
+   "comment": ""
+  },
+  "v6-c649": {
+   "rel": 1,
+   "comment": ""
+  },
+  "v6-c784": {
+   "rel": 1,
+   "comment": ""
+  },
+  "v6-c228": {
+   "rel": 1,
+   "comment": ""
+  },
+  "v6-c609": {
+   "rel": 1,
+   "comment": ""
+  },
+  "v6-c23": {
+   "rel": 1,
+   "comment": ""
+  },
+  "v6-c684": {
+   "rel": 1,
+   "comment": ""
+  },
+  "v6-c165": {
+   "rel": 1,
+   "comment": ""
+  },
+  "v7-c490": {
+   "rel": 1,
+   "comment": ""
+  },
+  "v7-c809": {
+   "rel": 1,
+   "comment": ""
+  },
+  "v7-c643": {
+   "rel": 2,
+   "comment": ""
+  },
+  "v7-c352": {
+   "rel": 2,
+   "comment": ""
+  },
+  "v7-c399": {
+   "rel": 2,
+   "comment": ""
+  },
+  "v7-c894": {
+   "rel": 2,
+   "comment": ""
+  },
+  "v7-c170": {
+   "rel": 2,
+   "comment": ""
+  },
+  "v7-c747": {
+   "rel": 2,
+   "comment": ""
+  },
+  "v7-c730": {
+   "rel": 2,
+   "comment": ""
+  },
+  "v7-c892": {
+   "rel": 2,
+   "comment": ""
+  },
+  "v8-c249": {
+   "rel": 2,
+   "comment": ""
+  },
+  "v8-c222": {
+   "rel": 0,
+   "comment": ""
+  },
+  "v8-c563": {
+   "rel": 0,
+   "comment": ""
+  },
+  "v8-c115": {
+   "rel": 0,
+   "comment": ""
+  },
+  "v8-c282": {
+   "rel": 0,
+   "comment": ""
+  },
+  "v8-c846": {
+   "rel": 0,
+   "comment": ""
+  },
+  "v8-c603": {
+   "rel": 0,
+   "comment": ""
+  },
+  "v8-c187": {
+   "rel": 0,
+   "comment": ""
+  },
+  "v8-c765": {
+   "rel": 0,
+   "comment": ""
+  },
+  "v8-c512": {
+   "rel": 0,
+   "comment": ""
+  },
+  "v9-c191": {
+   "rel": 3,
+   "comment": ""
+  },
+  "v9-c138": {
+   "rel": 3,
+   "comment": ""
+  },
+  "v9-c331": {
+   "rel": 3,
+   "comment": ""
+  },
+  "v9-c185": {
+   "rel": 3,
+   "comment": ""
+  },
+  "v9-c641": {
+   "rel": 3,
+   "comment": ""
+  },
+  "v9-c330": {
+   "rel": 3,
+   "comment": ""
+  },
+  "v9-c877": {
+   "rel": 3,
+   "comment": ""
+  },
+  "v9-c462": {
+   "rel": 3,
+   "comment": ""
+  },
+  "v9-c64": {
+   "rel": 3,
+   "comment": ""
+  },
+  "v9-c661": {
+   "rel": 2,
+   "comment": ""
+  }
+ }
+}

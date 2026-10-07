@@ -47,6 +47,7 @@ docker compose exec backend python -m app.seed.run --reset   # пересозд�
 |---|---|---|
 | `PUBLIC_URL` | `http://localhost:8080` | Публичный адрес: ссылки в письмах, QR, OIDC redirect, Keycloak hostname |
 | `HTTP_PORT` | `8080` | Внешний порт nginx |
+| `HTTP_BIND` | `0.0.0.0` | Адрес публикации порта; `127.0.0.1` за Caddy, чтобы не было входа в обход HTTPS |
 | `JWT_SECRET` | dev-значение | Секрет подписи токенов — **сменить в проде** |
 | `POSTGRES_PASSWORD` | `fsp` | Пароль БД |
 | `KEYCLOAK_ADMIN_PASSWORD` | `admin` | Пароль админки Keycloak |
@@ -71,23 +72,29 @@ docker compose exec backend python -m app.seed.run --reset   # пересозд�
 
 ## Вариант 2. Развёртывание на сервере с HTTPS
 
-1. VPS с 2 vCPU и 4 ГБ RAM, Docker, домен с A-записью на сервер.
-2. В `.env` задайте: `PUBLIC_URL=https://talent.example.ru`, `HTTP_PORT=8080`, `JWT_SECRET=<случайные 64 символа>`,
-   `EXPOSE_EMAIL_LINKS=false` (если настроен настоящий SMTP) или `true` (для демо-стенда).
-3. Поставьте перед стеком Caddy для автоматического TLS (`deploy/Caddyfile`):
+1. VPS с 2 vCPU, 4 ГБ RAM и 30 ГБ диска (Ubuntu 24.04). Домен: A-запись `talent` → IP сервера, TTL 300;
+   проверка — `nslookup talent.example.ru`. Без покупки домена подойдёт DuckDNS или `<ip>.sslip.io`.
+2. Подготовьте сервер:
 
+   ```bash
+   curl -fsSL https://get.docker.com | sh
+   apt install -y caddy git
+   ufw allow 22,80,443/tcp && ufw enable
+   git clone <repo> fsp-talent && cd fsp-talent
    ```
-   talent.example.ru {
-     reverse_proxy localhost:8080
-   }
-   ```
+
+3. В `.env` задайте: `PUBLIC_URL=https://talent.example.ru`, `HTTP_BIND=127.0.0.1` (стенд доступен только через
+   Caddy), `JWT_SECRET=<openssl rand -hex 32>`, `POSTGRES_PASSWORD` и `KEYCLOAK_ADMIN_PASSWORD` — случайные,
+   `EXPOSE_EMAIL_LINKS=false` (если настроен настоящий SMTP) или `true` (для демо-стенда).
+4. Поставьте перед стеком Caddy для автоматического TLS: замените домен в `deploy/Caddyfile`, затем
 
    ```bash
    docker compose up -d --build
-   caddy run --config deploy/Caddyfile   # или caddy как systemd-сервис
+   cp deploy/Caddyfile /etc/caddy/Caddyfile && systemctl reload caddy   # сертификат Let's Encrypt выпустится сам
+   curl https://talent.example.ru/api/health
    ```
 
-4. Nginx внутри стека передаёт `X-Forwarded-Proto`, Keycloak работает за прокси (`KC_PROXY_HEADERS=xforwarded`).
+5. Nginx внутри стека передаёт `X-Forwarded-Proto`, Keycloak работает за прокси (`KC_PROXY_HEADERS=xforwarded`).
    Ссылки авторизации ФСП ID строятся от `PUBLIC_URL`.
 
 ## Вариант 3. Локальная разработка без Docker
@@ -118,7 +125,7 @@ uv run pytest -q                       # 341 тест: сквозной сцен
                                        # каждой позиции банка, CAT и экспозиция, скоринг, LLM-слой, пилот, резюме
 uv run ruff check app validation tests # линтер
 uv run python -m validation.run        # валидация: docs/validation/report.md (~15 мин; --quick — ~5 мин)
-uv run python -m validation.labeling   # форма экспертной разметки пар: docs/validation/labeling/index.html
+uv run python -m validation.labeling   # форма разметки пар людьми: docs/validation/labeling/index.html
 uv run python -m validation.resumes    # пересобрать набор PDF-резюме для раздела 10
 cd ../frontend && npm run build        # проверка типов и сборка
 ```
