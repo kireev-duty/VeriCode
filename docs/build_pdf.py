@@ -20,11 +20,16 @@ ORDER = ["00-summary.md", "../README.md", "01-architecture.md", "02-testing.md",
 CSS = """
 @page { size: A4; margin: 16mm 14mm; }
 body { font-family: 'Segoe UI', 'PT Sans', Arial, sans-serif; color: #1B1C21; font-size: 10.5pt; line-height: 1.45; }
-h1 { color: #402FFF; font-size: 20pt; margin: 0 0 8pt; page-break-before: always; }
-h1:first-of-type { page-break-before: avoid; }
+h1 { color: #402FFF; font-size: 20pt; margin: 0 0 8pt; break-before: page; }
+h1, h2, h3, h4 { break-after: avoid; break-inside: avoid; }
 h2 { font-size: 14pt; margin: 16pt 0 6pt; border-bottom: 1px solid #E6E6EB; padding-bottom: 3pt; }
 h3 { font-size: 11.5pt; margin: 12pt 0 4pt; }
-table { border-collapse: collapse; width: 100%; margin: 6pt 0 10pt; font-size: 9pt; page-break-inside: avoid; }
+p, li { orphans: 3; widows: 3; }
+p:has(+ table, + pre, + ul, + ol) { break-after: avoid; }
+/* long tables may span pages: rows stay whole, the header repeats */
+table { border-collapse: collapse; width: 100%; margin: 6pt 0 10pt; font-size: 9pt; }
+thead { display: table-header-group; }
+tr, table.keep, pre { break-inside: avoid; }
 th, td { border: 1px solid #DADAE0; padding: 4pt 6pt; vertical-align: top; text-align: left; }
 th { background: #F1EFFF; }
 code { font-family: Consolas, 'JetBrains Mono', monospace; font-size: 9pt; background: #F6F6F9; padding: 0 2pt; }
@@ -45,7 +50,11 @@ def md_to_html(text: str, base: Path) -> str:
     text = re.sub(r"```mermaid\n(.*?)```", lambda m: f'<div class="mermaid">\n{m.group(1)}</div>', text, flags=re.S)
     text = re.sub(r"!\[(.*?)\]\((?!http)(.*?)\)",
                   lambda m: f"![{m.group(1)}]({(base / m.group(2)).resolve().as_uri()})", text)
-    return markdown.markdown(text, extensions=["tables", "fenced_code"])
+    html = markdown.markdown(text, extensions=["tables", "fenced_code"])
+    # short tables move to the next page whole instead of leaving a row or two behind
+    return re.sub(r"<table>(.*?)</table>",
+                  lambda m: f'<table{" class=keep" if m.group(1).count("<tr>") <= 14 else ""}>{m.group(1)}</table>',
+                  html, flags=re.S)
 
 
 def browser() -> str:
