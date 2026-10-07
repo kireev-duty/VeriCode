@@ -157,6 +157,13 @@ def make_candidate_user(db, rng, s: synth.SynthCandidate, email: str, bank, trut
         c.min_salary_for_invites = int(s.salary_expectation * 0.85 / 5000) * 5000
 
     res = synth.assign_grade(rng, s, bank, truth)
+    first = res["attempts"][0]
+    # a share of those who failed the declared grade have not retried a lower one yet: their grade stays
+    # unconfirmed and the employer sees them below the confirmed candidates (separate rng: the rest of the demo
+    # data does not shift)
+    if first["outcome"] == "not_confirmed" and random.Random(f"unconfirmed-{email}").random() < 0.2:
+        res = {**res, "attempts": [first], "grade": None, "theta": first["theta"], "se": first["se"],
+               "skill_theta": {}}
     s.test = res
     when = now - timedelta(days=s.activity_days)
     for i, att in enumerate(res["attempts"]):
@@ -181,7 +188,10 @@ def make_candidate_user(db, rng, s: synth.SynthCandidate, email: str, bank, trut
         st[1] += int(r.correct)
         st[2] += float(r.correct) - float(p_correct(res["theta"], r.item.params))
     c.grade, c.theta, c.theta_se, c.skill_theta = res["grade"], res["theta"], res["se"], res["skill_theta"]
-    c.grade_confirmed_at = when
+    if c.grade:
+        c.grade_confirmed_at = when
+    else:
+        c.claimed_grade = first["target"]
     if rng.random() < 0.5:
         c.last_task_at = now - timedelta(days=int(s.activity_days * rng.random()))
         c.task_score = round(rng.uniform(0.4, 1.0), 2)

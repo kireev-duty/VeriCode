@@ -28,7 +28,7 @@
 | POST | `/api/auth/verify-email` | Подтверждение email → токен |
 | POST | `/api/auth/resend-verification` | Повторное письмо |
 | POST | `/api/auth/login` | Вход (403 `email_not_verified`, если email не подтверждён) |
-| POST | `/api/auth/demo-login?role=` | Вход под демо-аккаунтом |
+| POST | `/api/auth/demo-login?role=` | Вход под демо-аккаунтом: `employer`, `candidate`; `candidate_new` каждый раз создаёт нового кандидата с экспресс-тестом |
 | GET | `/api/auth/me` | Текущий пользователь |
 
 ### candidate

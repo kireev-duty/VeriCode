@@ -1,0 +1,165 @@
+{
+  "about": "Честный набор для разбора текста потребности: 40 описаний в стиле реальных вакансий (перефразированы, не скопированы). Длинные тексты с «водой», опечатки, английский и смешанный язык, транслитерация, вилки в разных форматах, требования без заголовков. Эталон размечен вручную в терминах справочника app/catalog.py; грейд по стажу — по определениям справочника (Junior 1–2 года, Middle 2–5, Senior 5+); навыков, которых нет в справочнике (Rust, 1С, Swift...), в эталоне нет. salary: [от, до] в рублях, null — не указано; одно число — [X, X]. grade: null, если в тексте нет ни грейда, ни стажа.",
+  "cases": [
+    {
+      "text": "Привет! Мы — команда внутреннего маркетплейса крупного ритейлера. Растём, запускаем новые сервисы и ищем бэкендера, которому интересно работать с большими данными о заказах. Что предстоит: проектировать и разрабатывать микросервисы на Python (FastAPI), писать сложные запросы в PostgreSQL, заниматься оптимизацией. Мы ждём: опыт коммерческой разработки от 3 лет, уверенный SQL, понимание асинхронщины. Будет плюсом: Kafka, Kubernetes. Мы предлагаем: ДМС, гибкий график, гибрид в Москве или удалёнка по РФ. Вилка 280–350 тыс. на руки.",
+      "gold": {"specialization": "backend", "grade": "middle", "must": ["python", "fastapi", "postgresql", "sql", "asyncio", "microservices"], "nice": ["kafka", "kubernetes"], "formats": ["hybrid", "remote"], "salary": [280000, 350000]}
+    },
+    {
+      "text": "Ищем сеньора на джангу. Пайтон, постгрес, редис, селери. Удаленка. 400к",
+      "gold": {"specialization": "backend", "grade": "senior", "must": ["python", "django", "postgresql", "redis"], "nice": [], "formats": ["remote"], "salary": [400000, 400000]}
+    },
+    {
+      "text": "Backend Engineer (Go). We build a high-load ad exchange: 2M RPS, sub-10ms latency. Requirements: 4+ years with Go, gRPC, Kafka, ClickHouse; solid understanding of distributed systems. Nice to have: Kubernetes, Prometheus. Remote-first. Salary: 450–550k RUB gross.",
+      "gold": {"specialization": "backend", "grade": "middle", "must": ["go", "grpc", "kafka", "clickhouse", "system_design"], "nice": ["kubernetes", "monitoring"], "formats": ["remote"], "salary": [450000, 550000]}
+    },
+    {
+      "text": "Требуется Java разработчик (мидл) в банк. Spring Boot, микросервисы, Oracle/PostgreSQL, Kafka. Офис м. Белорусская, 5/2. ЗП обсуждается по итогам собеседования.",
+      "gold": {"specialization": "backend", "grade": "middle", "must": ["java", "spring", "microservices", "postgresql", "kafka"], "nice": [], "formats": ["office"], "salary": [null, null]}
+    },
+    {
+      "text": "Ищем PHP-разработчика: Laravel, MySQL, REST API, немного фронта (jquery). Опыт от года. Можно удалённо. от 120 до 160 т.р.",
+      "gold": {"specialization": "backend", "grade": "junior", "must": ["php", "laravel", "mysql", "rest"], "nice": [], "formats": ["remote"], "salary": [120000, 160000]}
+    },
+    {
+      "text": "Node.js разработчик. NestJS, TypeScript, MongoDB, RabbitMQ, docker. Будет плюсом опыт с GraphQL и AWS. Гибридный формат, Санкт-Петербург. 250 000 – 320 000 руб.",
+      "gold": {"specialization": "backend", "grade": null, "must": ["nodejs", "typescript", "mongodb", "rabbitmq", "docker"], "nice": ["cloud"], "formats": ["hybrid"], "salary": [250000, 320000]}
+    },
+    {
+      "text": "C#/.NET developer, ASP.NET Core, MS SQL, Entity Framework. Middle+. Офис или гибрид в Новосибирске. Вилка до 280 тысяч.",
+      "gold": {"specialization": "backend", "grade": "middle", "must": ["csharp", "sql"], "nice": [], "formats": ["office", "hybrid"], "salary": [null, 280000]}
+    },
+    {
+      "text": "Стажёр-бэкенд. Знаешь питон и основы SQL, решал задачки на алгоритмы (литкод, олимпиады — круто). Научим остальному. Офис в Казани, 60 тыс.",
+      "gold": {"specialization": "backend", "grade": "intern", "must": ["python", "sql", "algorithms"], "nice": [], "formats": ["office"], "salary": [60000, 60000]}
+    },
+    {
+      "text": "Kotlin backend (Spring), опыт 2+ года, PostgreSQL, Redis, понимание ООП и паттернов проектирования. Желательно — опыт с Kafka. Удаленно или офис. 230-290k",
+      "gold": {"specialization": "backend", "grade": "middle", "must": ["kotlin", "spring", "postgresql", "redis", "oop"], "nice": ["kafka"], "formats": ["remote", "office"], "salary": [230000, 290000]}
+    },
+    {
+      "text": "Разработчик на пайтоне в команду интеграций. асинк, aiohttp, постгре, монга. Тестов пишем много (pytest). Гибрид. от 200к",
+      "gold": {"specialization": "backend", "grade": null, "must": ["python", "asyncio", "postgresql", "mongodb", "autotests"], "nice": [], "formats": ["hybrid"], "salary": [200000, null]}
+    },
+    {
+      "text": "Frontend-разработчик (React). Над чем работать: личный кабинет клиента банка, дизайн-система, перф. Стек: React 18, TypeScript, Redux Toolkit, Vite, Jest. Нам важно: опыт от 2 лет, внимание к деталям вёрстки, понимание того, как работает браузер. Будет плюсом: Next.js, опыт оптимизации Web Vitals. Удалённо по РФ. 220–300 тыс. ₽ net.",
+      "gold": {"specialization": "frontend", "grade": "middle", "must": ["react", "typescript", "redux", "webpack", "html_css", "browser"], "nice": ["frontend_perf"], "formats": ["remote"], "salary": [220000, 300000]}
+    },
+    {
+      "text": "Ищем верстальщика-фронтендера: HTML5, CSS3 (flex, grid), SCSS, немного JS. Джуниор. Офис, Екатеринбург, 70-90 тыс",
+      "gold": {"specialization": "frontend", "grade": "junior", "must": ["html_css", "javascript"], "nice": [], "formats": ["office"], "salary": [70000, 90000]}
+    },
+    {
+      "text": "Senior Angular developer. Angular 16+, RxJS, TypeScript, NgRx. Mentoring juniors. Hybrid (Moscow). 380-450k",
+      "gold": {"specialization": "frontend", "grade": "senior", "must": ["angular", "typescript", "redux"], "nice": [], "formats": ["hybrid"], "salary": [380000, 450000]}
+    },
+    {
+      "text": "Vue/Nuxt разработчик на маркетплейс. ВАЖНО: опыт с SSR, Pinia, тайпскрипт. плюсом — опыт с вебпаком и настройкой сборки. удаленка, до 250",
+      "gold": {"specialization": "frontend", "grade": null, "must": ["vue", "typescript", "redux"], "nice": ["webpack"], "formats": ["remote"], "salary": [null, 250000]}
+    },
+    {
+      "text": "Фронтенд разработчик реакт тайпскрипт мидл удаленно 200-260",
+      "gold": {"specialization": "frontend", "grade": "middle", "must": ["react", "typescript"], "nice": [], "formats": ["remote"], "salary": [200000, 260000]}
+    },
+    {
+      "text": "Junior Frontend Developer: JavaScript (ES6+), React, HTML/CSS, Git. Пройдёте тестовое — позовём на собес. Гибрид в Нижнем Новгороде, з/п 100 000 руб.",
+      "gold": {"specialization": "frontend", "grade": "junior", "must": ["javascript", "react", "html_css", "git"], "nice": [], "formats": ["hybrid"], "salary": [100000, 100000]}
+    },
+    {
+      "text": "Lead frontend (опыт 6+ лет): архитектура фронтенда, микрофронтенды, React, TypeScript, CI/CD для фронта, производительность. Офис/гибрид Москва. 500-600 тыс.",
+      "gold": {"specialization": "frontend", "grade": "senior", "must": ["react", "typescript", "ci_cd", "frontend_perf"], "nice": [], "formats": ["office", "hybrid"], "salary": [500000, 600000]}
+    },
+    {
+      "text": "Data Scientist в команду рекомендаций. Задачи: ранжирование, A/B-тесты, онлайн-метрики. Нужны: Python, SQL, классический ML (бустинги — CatBoost/LightGBM), статистика и проверка гипотез. Плюсом — PyTorch, опыт с ClickHouse. Опыт от 2 лет. Удалённо. 300-380k gross.",
+      "gold": {"specialization": "data", "grade": "middle", "must": ["python", "sql", "ml", "statistics"], "nice": ["dl", "clickhouse"], "formats": ["remote"], "salary": [300000, 380000]}
+    },
+    {
+      "text": "ML Engineer (NLP/LLM). Fine-tuning трансформеров, RAG, векторные БД, деплой моделей в прод (Docker, Kubernetes). Python must have. Senior. Удалёнка, обсуждается",
+      "gold": {"specialization": "data", "grade": "senior", "must": ["nlp", "dl", "python", "docker", "kubernetes"], "nice": [], "formats": ["remote"], "salary": [null, null]}
+    },
+    {
+      "text": "Аналитик данных (junior+): SQL на уровне оконных функций, pandas, визуализация, базовая статистика. Будет плюсом знание питона для автоматизации отчётов. Офис, СПб, 110-140",
+      "gold": {"specialization": "data", "grade": "junior", "must": ["sql", "pandas", "statistics"], "nice": ["python"], "formats": ["office"], "salary": [110000, 140000]}
+    },
+    {
+      "text": "Computer Vision engineer: детекция и трекинг объектов (YOLO), OpenCV, PyTorch, оптимизация инференса. Опыт от 3 лет. Гибрид, Москва. 350-420 тыс",
+      "gold": {"specialization": "data", "grade": "middle", "must": ["cv", "dl"], "nice": [], "formats": ["hybrid"], "salary": [350000, 420000]}
+    },
+    {
+      "text": "Ищем стажера в отдел анализа данных. Знание математической статистики и теорвера, python (numpy/pandas), sql. Занятость от 30 ч/неделю, удаленно, 50 000 рублей",
+      "gold": {"specialization": "data", "grade": "intern", "must": ["statistics", "python", "pandas", "sql"], "nice": [], "formats": ["remote"], "salary": [50000, 50000]}
+    },
+    {
+      "text": "Data Scientist (кредитный скоринг). Логрег, градиентный бустинг, sklearn, валидация моделей, интерпретируемость. SQL обязательно. Желательно — опыт в банке. 250-320 тыс., офис или гибрид",
+      "gold": {"specialization": "data", "grade": null, "must": ["ml", "sql"], "nice": [], "formats": ["office", "hybrid"], "salary": [250000, 320000]}
+    },
+    {
+      "text": "QA Engineer (manual + API). Тест-дизайн, тест-кейсы и чек-листы, Postman, Swagger, SQL-запросы для проверки данных, баг-трекинг в Jira. Опыт от 1 года. Удаленно. 110 – 150 тыс.",
+      "gold": {"specialization": "qa", "grade": "junior", "must": ["test_design", "api_testing", "rest", "sql"], "nice": [], "formats": ["remote"], "salary": [110000, 150000]}
+    },
+    {
+      "text": "Automation QA (Python): pytest, Playwright/Selenium, API-автотесты, CI (GitLab CI), Allure. Будет плюсом: нагрузочное тестирование (Locust). Middle. Гибрид, Москва. 230–280k",
+      "gold": {"specialization": "qa", "grade": "middle", "must": ["python", "autotests", "api_testing", "ci_cd"], "nice": ["load_testing"], "formats": ["hybrid"], "salary": [230000, 280000]}
+    },
+    {
+      "text": "SDET на Java: JUnit 5, RestAssured, Selenide, Allure, Jenkins. Опыт автоматизации от 3 лет. Офис Санкт-Петербург, от 250 000 рублей",
+      "gold": {"specialization": "qa", "grade": "middle", "must": ["java", "autotests", "api_testing", "ci_cd"], "nice": [], "formats": ["office"], "salary": [250000, null]}
+    },
+    {
+      "text": "Тестировщик мобильных приложений (junior). Ручное тестирование iOS/Android, составление тест-кейсов, Charles/Proxyman, понимание клиент-серверной архитектуры и HTTP. Офис. 70-90 т.р.",
+      "gold": {"specialization": "qa", "grade": "junior", "must": ["test_design", "http"], "nice": [], "formats": ["office"], "salary": [70000, 90000]}
+    },
+    {
+      "text": "Performance QA engineer: JMeter, k6, анализ метрик в Grafana, профилирование. Знание Linux. Senior. Remote. 300-350",
+      "gold": {"specialization": "qa", "grade": "senior", "must": ["load_testing", "monitoring", "linux"], "nice": [], "formats": ["remote"], "salary": [300000, 350000]}
+    },
+    {
+      "text": "QA lead. Выстраивание процессов тестирования с нуля, тест-стратегия, менторинг команды из 5 человек, автотесты на Playwright (TypeScript). опыт 5+ лет. удаленно",
+      "gold": {"specialization": "qa", "grade": "senior", "must": ["test_design", "autotests", "typescript"], "nice": [], "formats": ["remote"], "salary": [null, null]}
+    },
+    {
+      "text": "DevOps-инженер. Ты будешь: поддерживать кластеры кубера (on-prem), писать пайплайны в GitLab CI, автоматизировать инфраструктуру ансиблом и терраформом, настраивать мониторинг (Prometheus, Grafana, Alertmanager). Мы ждём: Linux на уровне администратора, Docker, Kubernetes, опыт от 3 лет. Гибрид, Москва. 320-400 т.р.",
+      "gold": {"specialization": "devops", "grade": "middle", "must": ["kubernetes", "ci_cd", "terraform", "monitoring", "linux", "docker"], "nice": [], "formats": ["hybrid"], "salary": [320000, 400000]}
+    },
+    {
+      "text": "SRE (senior): SLO/SLI, инцидент-менеджмент, observability, Kubernetes, Go или Python для автоматизации, облака (Yandex Cloud). Удаленно. 450-550 тыс. руб",
+      "gold": {"specialization": "devops", "grade": "senior", "must": ["monitoring", "kubernetes", "go", "python", "cloud"], "nice": [], "formats": ["remote"], "salary": [450000, 550000]}
+    },
+    {
+      "text": "Junior DevOps / системный администратор Linux. bash-скрипты, nginx, docker-compose, основы сетей, желание изучить k8s. Офис, Самара, 80-100к",
+      "gold": {"specialization": "devops", "grade": "junior", "must": ["linux", "bash", "docker", "http"], "nice": ["kubernetes"], "formats": ["office"], "salary": [80000, 100000]}
+    },
+    {
+      "text": "Ищем девопса в стартап: AWS (EKS, RDS, S3), терраформ, GitHub Actions, докер. Будет плюсом: опыт с ArgoCD и helm. Remote, 280-350к",
+      "gold": {"specialization": "devops", "grade": null, "must": ["cloud", "terraform", "ci_cd", "docker"], "nice": ["kubernetes"], "formats": ["remote"], "salary": [280000, 350000]}
+    },
+    {
+      "text": "Platform engineer: внутренняя платформа разработки, Kubernetes operators, Helm, ArgoCD, GitOps, Go. 5+ years. Hybrid Moscow or remote. 400-500k",
+      "gold": {"specialization": "devops", "grade": "senior", "must": ["kubernetes", "ci_cd", "go"], "nice": [], "formats": ["hybrid", "remote"], "salary": [400000, 500000]}
+    },
+    {
+      "text": "Нужен питонист: джанго, дрф, постгря. Опыт от двух лет. Офис в Краснодаре. Зарплата: 150-200 тыс.",
+      "gold": {"specialization": "backend", "grade": "middle", "must": ["python", "django", "postgresql"], "nice": [], "formats": ["office"], "salary": [150000, 200000]}
+    },
+    {
+      "text": "Full-stack (бэк важнее): Python/FastAPI + React. PostgreSQL, Docker. Желательно знание TypeScript. Удаленно. 250к-300к",
+      "gold": {"specialization": "backend", "grade": null, "must": ["python", "fastapi", "react", "postgresql", "docker"], "nice": ["typescript"], "formats": ["remote"], "salary": [250000, 300000]}
+    },
+    {
+      "text": "Разработчик высоконагруженных сервисов на C++ (low latency, многопоточность, Linux). Алгоритмическая подготовка обязательна, призёры олимпиад приветствуются. Офис. От 350 тыс.",
+      "gold": {"specialization": "backend", "grade": null, "must": ["cpp", "linux", "algorithms"], "nice": [], "formats": ["office"], "salary": [350000, null]}
+    },
+    {
+      "text": "Middle Python dev, data platform team: Airflow, Spark, ClickHouse, Kafka, SQL. Удалённо. 280-330 тысяч рублей",
+      "gold": {"specialization": "backend", "grade": "middle", "must": ["python", "clickhouse", "kafka", "sql"], "nice": [], "formats": ["remote"], "salary": [280000, 330000]}
+    },
+    {
+      "text": "Ищем бэкенд-разраба на го: микросервисы, gRPC, постгрес, редис, кафка. Знание кубера будет плюсом. Гибрид или удалёнка. 300-400",
+      "gold": {"specialization": "backend", "grade": null, "must": ["go", "microservices", "grpc", "postgresql", "redis", "kafka"], "nice": ["kubernetes"], "formats": ["hybrid", "remote"], "salary": [300000, 400000]}
+    },
+    {
+      "text": "Специалист по информационной безопасности приложений (AppSec): OWASP Top 10, пентест веб-приложений, код-ревью на уязвимости (Python, Java). Опыт от 3 лет. Удаленно, 300-380к",
+      "gold": {"specialization": "backend", "grade": "middle", "must": ["security", "python", "java"], "nice": [], "formats": ["remote"], "salary": [300000, 380000]}
+    }
+  ]
+}

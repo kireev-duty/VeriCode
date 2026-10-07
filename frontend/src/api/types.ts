@@ -65,6 +65,10 @@ export interface CandidateCard {
   specialization_title: string | null
   grade: GradeId | null
   grade_title: string | null
+  /** false: the grade is claimed but not confirmed by the test; such candidates go after the confirmed ones */
+  grade_confirmed?: boolean
+  claimed_grade?: GradeId | null
+  claimed_grade_title?: string | null
   theta: number | null
   skill_theta: Record<string, number>
   grade_confirmed_at: string | null
@@ -130,7 +134,7 @@ export interface Shortlist {
   need_id: number
   total_in_categories: number
   after_filters: number
-  categories: { specialization: string; grade: GradeId; grade_title: string; is_target: boolean; count: number; avg_score: number }[]
+  categories: { specialization: string; grade: GradeId; grade_title: string; is_target: boolean; count: number; unconfirmed?: number; avg_score: number }[]
   candidates: CandidateCard[]
 }
 
@@ -209,6 +213,8 @@ export interface SessionState {
   answered: number
   min_items: number
   max_items: number
+  /** short demo test for the jury */
+  express?: boolean
   current_item: AssessmentItem | null
   created_at: string
   result?: {
@@ -225,7 +231,7 @@ export interface SessionState {
     finished_at: string
     correct: number
   }
-  review?: (AssessmentItem & { response: string | number | null; is_correct: boolean; answer: unknown; explanation: string })[]
+  review?: (AssessmentItem & { response: string | number | null; is_correct: boolean; answer: unknown; explanation: string; reported: boolean })[]
 }
 
 export interface Eligibility {

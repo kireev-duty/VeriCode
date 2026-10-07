@@ -60,6 +60,7 @@ class CandidateView:
     fsp_reasons: list[str]
     last_activity: datetime | None
     text: str
+    claimed_grade: str | None = None  # grade claimed but not confirmed by the test (grade is None then)
 
 
 def _grade_fit(cand_grade: str | None, need_grade: str) -> tuple[float, str | None]:
@@ -197,6 +198,10 @@ def score(c: CandidateView, n: NeedSpec, weights: dict[str, float] | None = None
                       "text": "Нет обязательных: " + ", ".join(SKILL_BY_ID[s].title for s in missing[:4]),
                       "impact": -round(w["skills"] * len(missing) / max(1, len(n.must_skills)), 3)})
     g_val, g_note = _grade_fit(c.grade, n.grade)
+    if not c.grade and c.claimed_grade:
+        chips.append({"kind": "negative", "component": "grade",
+                      "text": f"Заявлен {GRADE_BY_ID[c.claimed_grade].title}, тестом не подтверждён",
+                      "impact": -round(w["grade"], 3)})
     if c.grade:
         chips.append({"kind": "positive" if g_val >= 0.7 else "negative", "component": "grade",
                       "text": f"Грейд {GRADE_BY_ID[c.grade].title} подтверждён тестом"
@@ -227,15 +232,19 @@ def score(c: CandidateView, n: NeedSpec, weights: dict[str, float] | None = None
 
 
 def profile_strength(c: CandidateView, now: datetime | None = None) -> float:
-    """Ranking inside a category without a specific need: test ability within the band, FSP, freshness."""
+    """Ranking inside a category without a specific need: test ability within the band, FSP, freshness.
+    An unconfirmed (claimed) grade is ranked in its claimed band at half strength; listings also put such
+    candidates after all confirmed ones."""
     now = now or datetime.now(UTC)
-    if c.theta is None or c.grade is None:
+    grade = c.grade or c.claimed_grade
+    if c.theta is None or grade is None:
         return 0.0
-    idx = GRADE_ORDER.index(c.grade)
-    lo = GRADE_BY_ID[c.grade].theta_min if idx > 0 else -2.0
+    idx = GRADE_ORDER.index(grade)
+    lo = GRADE_BY_ID[grade].theta_min if idx > 0 else -2.0
     hi = GRADE_BY_ID[GRADE_ORDER[idx + 1]].theta_min if idx + 1 < len(GRADE_ORDER) else 2.2
     within = min(1.0, max(0.0, (c.theta - lo) / (hi - lo)))
-    return round(0.6 * within + 0.25 * c.fsp + 0.15 * _freshness(c.last_activity, now), 4)
+    strength = 0.6 * within + 0.25 * c.fsp + 0.15 * _freshness(c.last_activity, now)
+    return round(strength if c.grade else 0.5 * strength, 4)
 
 
 def adapt_weights(current: dict[str, float], decline_reason: str, step: float = 0.1, cap: float = 2.0

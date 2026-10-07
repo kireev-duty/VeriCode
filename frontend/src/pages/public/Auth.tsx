@@ -39,7 +39,7 @@ export function DemoButtons({ compact }: { compact?: boolean }) {
       <Button variant="secondary" onClick={() => demo.mutate('employer')} loading={demo.isPending && demo.variables === 'employer'}>
         Работодатель
       </Button>
-      {demo.error && <div className="text-sm text-accent-500 sm:col-span-3">{(demo.error as Error).message}</div>}
+      {demo.error && <div className="text-sm text-accent-600 sm:col-span-3">{(demo.error as Error).message}</div>}
     </div>
   )
 }

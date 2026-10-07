@@ -4,7 +4,7 @@ import { ArrowRight, Check, CircleDashed, Eye, EyeOff, Mail, Trophy, Zap } from 
 import { Link } from 'react-router'
 import { api } from '../../api/client'
 import type { CandidateProfile, Invitation, TaskSub } from '../../api/types'
-import { Badge, Card, PageHeader, PageLoader, ProgressBar, SectionTitle } from '../../components/ui'
+import { Badge, Card, Empty, PageHeader, PageLoader, ProgressBar, SectionTitle } from '../../components/ui'
 import { useCatalog } from '../../lib/catalog'
 import { ago, date, INVITATION_STATUS, salaryRange, skillLevel } from '../../lib/format'
 
@@ -118,10 +118,9 @@ export function CandidateDashboard() {
             action={<Link to="/c/invitations" className="text-sm font-medium text-brand-600">Все →</Link>}
           />
           {!invitations?.length ? (
-            <div className="rounded-xl bg-surface p-6 text-center text-sm text-muted">
-              <Mail className="mx-auto mb-2 size-6 text-brand-300" />
-              Пока приглашений нет. Работодатели находят кандидатов по категории — держите профиль актуальным.
-            </div>
+            <Empty icon={<Mail className="size-6" />} title="Пока приглашений нет">
+              Работодатели находят кандидатов по категории — держите профиль актуальным.
+            </Empty>
           ) : (
             <div className="divide-y divide-line">
               {invitations.slice(0, 4).map((i) => (

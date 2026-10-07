@@ -3,7 +3,11 @@
 ## Вариант 1. Docker Compose (рекомендуется)
 
 Требования: Docker 24+ с Compose v2, 3 ГБ свободной памяти, свободный порт 8080. ОС любая: Linux, macOS или Windows
-с Docker Desktop.
+с Docker Desktop. GPU не нужен: локальных моделей нет, языковая модель необязательна и вызывается по API. Стек
+с запасом укладывается в ориентир стенда жюри (8 CPU, 32–64 ГБ RAM).
+
+Для проверки: на странице входа кнопка «Новый кандидат» создаёт свежий аккаунт на каждый клик, тест в нём
+идёт в экспресс-режиме (3–5 минут). «Демо-работодатель» открывает кабинет с готовыми потребностями и подборками.
 
 ```bash
 git clone <repo> fsp-talent
@@ -49,7 +53,21 @@ docker compose exec backend python -m app.seed.run --reset   # пересозд�
 | `SEED_DEMO` | `true` | Загрузить демо-данные при старте |
 | `EXPOSE_EMAIL_LINKS` | `true` | Возвращать ссылку подтверждения в ответе API (только для демо) |
 | `FSP_OIDC_ENABLED` | `true` | `false` — встроенная заглушка ФСП ID вместо Keycloak |
-| `LLM_PROVIDER` | `none` | Зарезервировано для перефразирования условий |
+| `LLM_PROVIDER` | `none` | Языковая модель поверх правил NLP: `none`, `gigachat`, `yandex`, `local` или цепочка через запятую (`gigachat,local`: при сбое первой отвечает следующая, при сбое всех — правила) |
+| `LLM_API_KEY` | — | GigaChat: ключ авторизации (Base64) из личного кабинета; YandexGPT: API-ключ сервисного аккаунта |
+| `LLM_MODEL` | — | По умолчанию `GigaChat` или `yandexgpt-lite/latest` |
+| `LLM_SCOPE` | `GIGACHAT_API_PERS` | GigaChat: `GIGACHAT_API_PERS`, `GIGACHAT_API_B2B` или `GIGACHAT_API_CORP` |
+| `LLM_FOLDER_ID` | — | YandexGPT: идентификатор каталога Yandex Cloud |
+| `LLM_VERIFY_SSL`, `LLM_CA_BUNDLE` | `true`, `certs/russian_trusted_ca.pem` | GigaChat использует сертификат НУЦ Минцифры: корневой и промежуточный сертификаты лежат в `backend/certs/` и встроены в образ |
+| `LLM_TIMEOUT` | `30` | Таймаут ответа облачной модели, с; соединение повторяется до 3 раз |
+| `LOCAL_LLM_URL` | `http://ollama:11434/v1` | Локальная открытая модель: OpenAI-совместимый API (Ollama, vLLM, llama.cpp server) |
+| `LOCAL_LLM_MODEL` | `qwen3:4b-instruct` | Qwen3-4B-Instruct-2507 (Apache-2.0), ~2.5 ГБ; Ollama скачивает её при первом старте |
+
+Локальная модель запускается профилем: `docker compose --profile local-llm up -d` (+~3 ГБ RAM, без видеокарты ответ 10–40 с).
+Данные кандидатов при этом не покидают сервер.
+
+Без ключа все сценарии работают на правилах. Проверить ключ: `cd backend && uv run python -m app.modules.llm "текст вакансии"`
+— команда покажет провайдера, разбор правилами и уточнённый разбор.
 
 ## Вариант 2. Развёртывание на сервере с HTTPS
 
@@ -96,8 +114,33 @@ npm run dev                                     # http://localhost:5173, /api п
 
 ```bash
 cd backend
-uv run pytest -q                       # e2e-сценарий API: регистрация → тест → подборка → приглашение → контакты
-uv run ruff check app validation       # линтер
-uv run python -m validation.run        # валидация: docs/validation/report.md (~4 мин; --quick — 30 с)
+uv run pytest -q                       # 341 тест: сквозной сценарий API, права доступа, политики, уникальность
+                                       # каждой позиции банка, CAT и экспозиция, скоринг, LLM-слой, пилот, резюме
+uv run ruff check app validation tests # линтер
+uv run python -m validation.run        # валидация: docs/validation/report.md (~15 мин; --quick — ~5 мин)
+uv run python -m validation.labeling   # форма экспертной разметки пар: docs/validation/labeling/index.html
+uv run python -m validation.resumes    # пересобрать набор PDF-резюме для раздела 10
 cd ../frontend && npm run build        # проверка типов и сборка
 ```
+
+Против запущенного стенда (`docker compose up -d --build`):
+
+```bash
+cd e2e && npm ci && npx playwright install chromium
+npx playwright test                    # сквозной сценарий ТЗ 3.3 + скриншоты всех страниц на 1440 и 375 px
+                                       # (e2e/screens/), проверка отсутствия горизонтальной прокрутки
+cd ../backend
+uv run python -m validation.load --users 50 --seconds 180   # нагрузка: p50/p95/p99 → docs/validation/load.json
+```
+
+Результаты последнего нагрузочного прогона (50 одновременных пользователей, 3 минуты, ноутбук): 37 запросов в
+секунду без ошибок; p95 всех операций ≤ 380 мс (подборка — 218 мс, поиск — 143 мс, карточка кандидата — 102 мс).
+Память стека под нагрузкой — около 1 ГБ: backend ~300 МБ, Keycloak ~525 МБ, PostgreSQL ~85 МБ.
+
+### Пилот на людях
+
+1. Задайте токен выгрузки: `PILOT_EXPORT_TOKEN=<случайная строка>` в `.env` рядом с `docker-compose.yml`, затем
+   `docker compose up -d`.
+2. Участники регистрируются, проходят тест и заполняют анкету «Помогите проверить тест» на странице результата.
+3. `cd backend && uv run python -m validation.pilot --fetch http://<стенд> --token <токен>` сохраняет обезличенную
+   выгрузку в `docs/validation/pilot/`; `uv run python -m validation.run` добавит раздел «Пилот» в отчёт.

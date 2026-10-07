@@ -21,6 +21,7 @@ interface Parsed {
   specialization: string | null
   declared_grade_hint: string
   work_formats: WorkFormat[]
+  source: 'rules' | 'rules+llm'
 }
 
 type Form = Omit<CandidateProfile, 'achievements'>
@@ -123,7 +124,7 @@ export function CandidateProfilePage() {
         }
       />
       {upload.error && <Alert tone="danger" className="mb-4">{(upload.error as Error).message}</Alert>}
-      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+      <div className="grid gap-6 lg:grid-cols-[1fr_320px] [&>*]:min-w-0">
         <div className="space-y-6">
           <Card className="p-6">
             <SectionTitle label="Скрыто до согласия" title="Личные данные и контакты" />
@@ -141,8 +142,8 @@ export function CandidateProfilePage() {
               <Field label="О себе" className="sm:col-span-2"><Textarea rows={4} value={form.about} onChange={(e) => set('about', e.target.value)} /></Field>
               <Field label="Город"><Input value={form.city} onChange={(e) => set('city', e.target.value)} /></Field>
               <Field label="Коммерческий опыт, лет"><Input type="number" step={0.5} min={0} value={form.experience_years} onChange={(e) => set('experience_years', Number(e.target.value))} /></Field>
-              <Field label="Ожидания по зарплате, ₽/мес" hint="Работодатель не видит сумму — только попадает ли его вилка в ожидания">
-                <Input type="number" step={5000} min={0} value={form.salary_expectation ?? ''} onChange={(e) => set('salary_expectation', e.target.value ? Number(e.target.value) : null)} />
+              <Field label="Ожидания по зарплате, ₽/мес до НДФЛ" hint="Работодатель не видит сумму — только попадает ли его вилка в ожидания">
+                <Input type="number" step={1000} min={0} value={form.salary_expectation ?? ''} onChange={(e) => set('salary_expectation', e.target.value ? Number(e.target.value) : null)} />
               </Field>
               <Field label="Формат работы">
                 <MultiChips
@@ -184,7 +185,7 @@ export function CandidateProfilePage() {
               ))}
             </div>
             <div className="mt-3 flex gap-2">
-              <select className="h-10 flex-1 rounded-xl border border-line bg-white px-3 text-sm" value={skillToAdd} onChange={(e) => setSkillToAdd(e.target.value)}>
+              <select className="h-10 min-w-0 flex-1 rounded-xl border border-line bg-white px-3 text-sm" value={skillToAdd} onChange={(e) => setSkillToAdd(e.target.value)}>
                 <option value="">Добавить навык…</option>
                 {catalog.skills
                   .filter((s) => !form.skills.some((x) => x.id === s.id))
@@ -228,7 +229,7 @@ export function CandidateProfilePage() {
                     <Field label="С (год)"><Input value={e.from} onChange={(x) => upd('from', x.target.value)} /></Field>
                     <Field label="По (пусто — по н. в.)"><Input value={e.to} onChange={(x) => upd('to', x.target.value)} /></Field>
                     <Field label="Чем занимались" className="sm:col-span-2"><Textarea rows={2} value={e.summary} onChange={(x) => upd('summary', x.target.value)} /></Field>
-                    <button className="text-left text-xs text-accent-500" onClick={() => set('experience', form.experience.filter((_, j) => j !== i))}>Удалить</button>
+                    <button className="text-left text-xs text-accent-600" onClick={() => set('experience', form.experience.filter((_, j) => j !== i))}>Удалить</button>
                   </div>
                 )
               })}
@@ -259,7 +260,8 @@ export function CandidateProfilePage() {
         {parsed && (
           <div className="space-y-4">
             <Alert tone="brand">
-              <Wand2 className="mr-1 inline size-4" /> Проверьте поля — в профиль попадёт только то, что вы отметите.
+              <Wand2 className="mr-1 inline size-4" /> Проверьте поля — в профиль попадёт только то, что вы отметите.{' '}
+              {parsed.source === 'rules+llm' ? 'Распознано правилами и уточнено языковой моделью.' : 'Распознано правилами и словарём навыков.'}
             </Alert>
             {[
               ['name', 'ФИО', parsed.full_name],

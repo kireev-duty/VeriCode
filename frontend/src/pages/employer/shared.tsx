@@ -1,13 +1,36 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import clsx from 'clsx'
 import { BadgeCheck, EyeOff, Minus, Pin, Plus, Send, Trophy, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { api } from '../../api/client'
 import type { CandidateCard, Filters, WorkFormat } from '../../api/types'
 import { Alert, Badge, Button, Card, Checkbox, CodeAvatar, Field, GradeBadge, Input, Modal, MultiChips, ScoreRing, Select, Textarea, Toggle } from '../../components/ui'
 import { useCatalog } from '../../lib/catalog'
 import { INVITATION_STATUS, rub, years } from '../../lib/format'
+
+// ------------------------------------------------------------------------------------------- candidate list
+
+/** Confirmed grades first, then the candidates whose grade is not confirmed yet, below a divider: they are not hidden
+ * (they would drop out of circulation), but the employer sees that the test did not confirm the claim. */
+export function CandidateList({ items, render }: { items: CandidateCard[]; render: (c: CandidateCard) => ReactNode }) {
+  const confirmed = items.filter((c) => c.grade_confirmed !== false)
+  const tail = items.filter((c) => c.grade_confirmed === false)
+  return (
+    <div className="space-y-3">
+      {confirmed.map((c) => <Fragment key={c.id}>{render(c)}</Fragment>)}
+      {tail.length > 0 && (
+        <div className="pt-4">
+          <div className="mono-label text-muted">Грейд не подтверждён тестом · {tail.length}</div>
+          <p className="mt-1 text-sm text-muted">
+            Кандидаты проходили тест на этот грейд, но не подтвердили его и ещё не пересдали. Показаны ниже основной выдачи.
+          </p>
+        </div>
+      )}
+      {tail.map((c) => <Fragment key={c.id}>{render(c)}</Fragment>)}
+    </div>
+  )
+}
 
 // ------------------------------------------------------------------------------------------- candidate card
 
@@ -36,7 +59,7 @@ export function CandidateRow({
             <Link to={`/e/candidates/${c.id}${needId ? `?need=${needId}` : ''}`} className="font-semibold hover:text-brand-600">
               {c.headline || 'Кандидат'} <span className="font-mono text-xs font-normal text-muted">{c.code}</span>
             </Link>
-            <GradeBadge grade={c.grade} title={c.grade_title} spec={c.specialization_title} />
+            <GradeBadge grade={c.grade} title={c.grade_title} spec={c.specialization_title} claimed={c.claimed_grade_title} />
             {c.has_fsp && (
               <Badge tone="brand">
                 <Trophy className="size-3" /> ФСП{c.fsp_rank ? ` · ${c.fsp_rank}` : ''}
@@ -68,7 +91,7 @@ export function CandidateRow({
                   className={clsx(
                     'inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs',
                     ch.kind === 'positive' && 'bg-ok-50 text-ok',
-                    ch.kind === 'negative' && 'bg-accent-50 text-accent-500',
+                    ch.kind === 'negative' && 'bg-accent-50 text-accent-600',
                     ch.kind === 'neutral' && 'bg-surface text-muted',
                   )}
                 >
@@ -188,7 +211,7 @@ export function FiltersPanel({
           <Input type="number" min={0} value={value.min_experience ?? ''} onChange={(e) => set('min_experience', e.target.value ? Number(e.target.value) : null)} />
         </Field>
       </div>
-      <Field label="Ожидания не выше, ₽">
+      <Field label="Ожидания не выше, ₽/мес до НДФЛ">
         <Input type="number" step={10000} value={value.max_salary ?? ''} onChange={(e) => set('max_salary', e.target.value ? Number(e.target.value) : null)} />
       </Field>
     </Card>
@@ -209,6 +232,7 @@ interface Preview {
   hint: string
   quota_left: number
   open_to_offers: boolean
+  grade_warning?: string | null
 }
 
 const SALARY_TONE: Record<Preview['salary_status'], 'ok' | 'warn' | 'danger' | 'muted'> = {
@@ -297,16 +321,21 @@ export function InviteModal({
             <Field label="Позиция" className="sm:col-span-2">
               <Input required value={title} onChange={(e) => setTitle(e.target.value)} />
             </Field>
-            <Field label="Зарплата от, ₽/мес">
-              <Input type="number" required min={1} step={5000} value={from || ''} onChange={(e) => setFrom(Number(e.target.value))} />
+            <Field label="Зарплата от, ₽/мес до НДФЛ">
+              <Input type="number" required min={0} step={1000} value={from || ''} onChange={(e) => setFrom(Number(e.target.value))} />
             </Field>
-            <Field label="Зарплата до, ₽/мес">
-              <Input type="number" required min={1} step={5000} value={to || ''} onChange={(e) => setTo(Number(e.target.value))} />
+            <Field label="Зарплата до, ₽/мес до НДФЛ">
+              <Input type="number" required min={0} step={1000} value={to || ''} onChange={(e) => setTo(Number(e.target.value))} />
             </Field>
           </div>
           {p && (
             <Alert tone={SALARY_TONE[p.salary_status]} title="Проверка вилки">
               {p.hint}. Сумма ожиданий кандидата не раскрывается.
+            </Alert>
+          )}
+          {p?.grade_warning && (
+            <Alert tone="warn" title="Грейд не подтверждён">
+              {p.grade_warning}. Приглашение отправить можно: уровень стоит уточнить на собеседовании.
             </Alert>
           )}
           <Field label="Описание предложения" hint="Персональное сообщение повышает шанс согласия. Кандидат увидит его до раскрытия контактов.">

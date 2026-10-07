@@ -16,8 +16,20 @@ x-backend-env: &backend-env
   FSP_OIDC_ISSUER: http://keycloak:8080/auth/realms/fsp
   FSP_OIDC_PUBLIC_ISSUER: ${PUBLIC_URL:-http://localhost:8080}/auth/realms/fsp
   FSP_REGISTRY_URL: http://fsp_registry:8090
+  # optional LLM over the rule-based NLP: none | gigachat | yandex (see docs/08-deploy.md)
   LLM_PROVIDER: ${LLM_PROVIDER:-none}
   LLM_API_KEY: ${LLM_API_KEY:-}
+  LLM_MODEL: ${LLM_MODEL:-}
+  LLM_SCOPE: ${LLM_SCOPE:-GIGACHAT_API_PERS}
+  LLM_FOLDER_ID: ${LLM_FOLDER_ID:-}
+  LLM_VERIFY_SSL: ${LLM_VERIFY_SSL:-true}
+  LLM_CA_BUNDLE: ${LLM_CA_BUNDLE:-certs/russian_trusted_ca.pem}  # Russian Trusted Root + Sub CA (GigaChat)
+  LLM_TIMEOUT: ${LLM_TIMEOUT:-30}
+  # local open-weight model (LLM_PROVIDER=local or gigachat,local): docker compose --profile local-llm up -d
+  LOCAL_LLM_URL: ${LOCAL_LLM_URL:-http://ollama:11434/v1}
+  LOCAL_LLM_MODEL: ${LOCAL_LLM_MODEL:-qwen3:4b-instruct}
+  # anonymised export of pilot test sessions for validation/pilot.py; empty = disabled
+  PILOT_EXPORT_TOKEN: ${PILOT_EXPORT_TOKEN:-}
 
 services:
   db:
@@ -81,5 +93,20 @@ services:
       - backend
     restart: unless-stopped
 
+  # Ollama (MIT) + Qwen3 4B Instruct (Apache-2.0): optional, ~3 GB of RAM, pulls the model on first start
+  ollama:
+    image: ollama/ollama:0.40.0
+    profiles: ["local-llm"]
+    entrypoint: ["/bin/sh", "-c", "ollama serve & sleep 3 && ollama pull \"$$LOCAL_LLM_MODEL\" && wait"]
+    environment:
+      LOCAL_LLM_MODEL: ${LOCAL_LLM_MODEL:-qwen3:4b-instruct}
+      OLLAMA_KEEP_ALIVE: 24h
+    ports:
+      - "127.0.0.1:11434:11434"  # for a backend started with uv run
+    volumes:
+      - ollama:/root/.ollama
+    restart: unless-stopped
+
 volumes:
   pgdata:
+  ollama:

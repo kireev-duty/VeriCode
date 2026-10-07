@@ -15,6 +15,7 @@ from app.core.db import utcnow
 from app.models import Application, CandidateProfile, Company, Invitation, Vacancy
 from app.modules.events import emit_webhook, notify
 from app.modules.matching.scoring import adapt_weights
+from app.modules.matching.service import in_bank
 
 DECLINE_REASONS = {
     "salary": "Не устраивает зарплата",
@@ -62,7 +63,7 @@ def expire_stale(db: Session) -> int:
 def send_invitation(db: Session, company: Company, cand: CandidateProfile, data: dict) -> Invitation:
     if not company.name:
         raise FlowError("company_profile_required", "Заполните профиль компании: название видно кандидату", 400)
-    if cand.grade is None or not cand.visible_to_employers or cand.consent_publication_at is None:
+    if not in_bank(cand):
         raise FlowError("candidate_unavailable", "Кандидат недоступен для приглашений", 404)
     if not cand.open_to_offers:
         raise FlowError("not_open", "Кандидат сейчас не принимает предложения")

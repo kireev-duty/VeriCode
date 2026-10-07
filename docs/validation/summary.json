@@ -1,168 +1,626 @@
 {
-  "generated_at": "2026-10-05 09:02 UTC",
+  "generated_at": "2026-10-07 06:38 UTC",
   "test": {
     "n": 3000,
-    "seconds": 76.7,
-    "grade_exact": 0.775,
+    "seconds": 67.4,
+    "grade_exact": 0.767,
     "grade_within_1": 1.0,
-    "over_graded": 0.086,
-    "under_graded": 0.139,
+    "over_graded": 0.088,
+    "under_graded": 0.145,
     "self_assessment_exact": 0.634,
     "self_assessment_over": 0.24,
-    "theta_corr": 0.907,
-    "theta_rmse": 0.401,
-    "items_per_attempt_mean": 17.1,
-    "items_total_mean": 27.7,
-    "attempts_mean": 1.6,
-    "claim_bias_theta": -0.045,
-    "claim_bias_ci95": 0.053,
+    "theta_corr": 0.908,
+    "theta_rmse": 0.398,
+    "items_per_attempt_mean": 16.7,
+    "items_total_mean": 27.3,
+    "attempts_mean": 1.61,
+    "claim_bias_theta": -0.049,
+    "claim_bias_ci95": 0.05,
     "claim_vs_retest_sd": [
-      0.545,
-      0.476
+      0.515,
+      0.446
     ],
-    "decision_accuracy": 0.829,
-    "retest_exact": 0.767,
-    "retest_kappa_w": 0.846,
-    "retest_theta_r": 0.866,
-    "pbis_median": 0.429,
-    "pbis_share_ge_0_2": 1.0,
-    "max_exposure_rate": 0.634,
-    "items_used": 92,
-    "items_in_bank": 92,
+    "decision_accuracy": 0.83,
+    "retest_exact": 0.778,
+    "retest_kappa_w": 0.854,
+    "retest_theta_r": 0.874,
+    "pbis_median": 0.423,
+    "pbis_share_ge_0_2": 0.973,
+    "max_exposure_rate": 0.435,
+    "max_exposure_in_spec": 0.8,
+    "exposure_cap": 0.4,
+    "items_used": 150,
+    "items_in_bank": 150,
     "confusion": [
       [
-        297,
-        115,
+        322,
+        90,
         0,
         0
       ],
       [
-        91,
-        830,
-        107,
+        97,
+        797,
+        134,
         0
       ],
       [
         0,
-        203,
+        199,
         867,
-        36
+        40
       ],
       [
         0,
         0,
-        124,
-        330
+        139,
+        315
       ]
     ],
-    "admin_total": 52641
+    "admin_total": 81802,
+    "content_exposure_max": 0.0068
+  },
+  "seeds": {
+    "seeds": [
+      11,
+      12,
+      13,
+      14,
+      15
+    ],
+    "n": 1500,
+    "exact": {
+      "mean": 0.779,
+      "sd": 0.006,
+      "values": [
+        0.769,
+        0.778,
+        0.785,
+        0.779,
+        0.784
+      ]
+    },
+    "within1": {
+      "mean": 1.0,
+      "sd": 0.0,
+      "values": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    "retest_kappa_w": {
+      "mean": 0.842,
+      "sd": 0.01,
+      "values": [
+        0.839,
+        0.849,
+        0.849,
+        0.827,
+        0.848
+      ]
+    },
+    "retest_exact": {
+      "mean": 0.762,
+      "sd": 0.021,
+      "values": [
+        0.755,
+        0.779,
+        0.779,
+        0.729,
+        0.765
+      ]
+    }
+  },
+  "sweeps": {
+    "n": 1200,
+    "confirm_p": [
+      {
+        "value": 0.5,
+        "exact": 0.769,
+        "over": 0.12,
+        "under": 0.111
+      },
+      {
+        "value": 0.6,
+        "exact": 0.782,
+        "over": 0.077,
+        "under": 0.141
+      },
+      {
+        "value": 0.7,
+        "exact": 0.757,
+        "over": 0.056,
+        "under": 0.187
+      }
+    ],
+    "exposure": [
+      {
+        "value": null,
+        "exact": 0.78,
+        "items": 16.5,
+        "max_overall": 0.472,
+        "max_in_spec": 0.944
+      },
+      {
+        "value": 0.6,
+        "exact": 0.792,
+        "items": 16.6,
+        "max_overall": 0.473,
+        "max_in_spec": 0.849
+      },
+      {
+        "value": 0.5,
+        "exact": 0.777,
+        "items": 16.6,
+        "max_overall": 0.443,
+        "max_in_spec": 0.832
+      },
+      {
+        "value": 0.4,
+        "exact": 0.782,
+        "items": 16.6,
+        "max_overall": 0.44,
+        "max_in_spec": 0.807
+      },
+      {
+        "value": 0.3,
+        "exact": 0.772,
+        "items": 16.9,
+        "max_overall": 0.406,
+        "max_in_spec": 0.832
+      }
+    ]
   },
   "leak": {
-    "static_theta_gain": 0.556,
-    "static_grade_up": 0.542,
+    "static_theta_gain": 0.53,
+    "static_grade_up": 0.535,
     "cat_key_theta_gain": 0.0,
     "cat_key_grade_up": 0.0,
-    "cat_method_theta_gain": 0.239,
-    "cat_method_grade_up": 0.237,
-    "detector_false_positive_rate": 0.037,
-    "detector_power_30": 0.647,
-    "detector_delay_30": 40,
-    "detector_power_50": 0.797,
+    "cat_method_theta_gain": 0.181,
+    "cat_method_grade_up": 0.159,
+    "detector_false_positive_rate": 0.053,
+    "detector_power_30": 0.593,
+    "detector_delay_30": 35,
+    "detector_power_50": 0.803,
     "detector_delay_50": 21
   },
   "uniqueness": {
-    "slots": 92,
+    "slots": 150,
     "median_collision": 0.0025,
-    "mean_collision": 0.0076,
-    "share_slots_collision_lt_1pct": 0.783,
+    "mean_collision": 0.0034,
+    "share_slots_collision_lt_1pct": 1.0,
     "worst": [
       {
-        "item": "cron_schedule:1",
-        "distinct": 20,
-        "collision": 0.0522,
-        "top_answer_share": 0.1425,
-        "kind": "number"
+        "item": "js_closures:2",
+        "distinct": 124,
+        "collision": 0.0098125,
+        "top_answer_share": 0.03,
+        "kind": "text"
       },
       {
-        "item": "linux_perms:2",
-        "distinct": 24,
-        "collision": 0.0445125,
-        "top_answer_share": 0.13,
-        "kind": "text"
+        "item": "cron_schedule:1",
+        "distinct": 136,
+        "collision": 0.0094,
+        "top_answer_share": 0.075,
+        "kind": "number"
       },
       {
         "item": "py_classes:3",
-        "distinct": 24,
-        "collision": 0.043625000000000004,
-        "top_answer_share": 0.055,
+        "distinct": 153,
+        "collision": 0.009175,
+        "top_answer_share": 0.08,
         "kind": "text"
       },
       {
-        "item": "stats_basic:2",
-        "distinct": 25,
-        "collision": 0.0419375,
-        "top_answer_share": 0.085,
-        "kind": "number"
+        "item": "py_iterators:2",
+        "distinct": 161,
+        "collision": 0.008825000000000001,
+        "top_answer_share": 0.07,
+        "kind": "text"
       },
       {
-        "item": "stats_basic:3",
-        "distinct": 36,
-        "collision": 0.030625,
-        "top_answer_share": 0.095,
-        "kind": "number"
+        "item": "dom_events:2",
+        "distinct": 209,
+        "collision": 0.008812500000000001,
+        "top_answer_share": 0.0425,
+        "kind": "text"
       }
     ],
-    "median_top_answer_share": 0.188
+    "median_top_answer_share": 0.179
   },
   "matching": {
     "candidates": 900,
     "vacancies": 40,
-    "relevant_per_vacancy_median": 51,
+    "relevant_per_vacancy_median": 41,
     "table": {
       "Ключевые слова (как hh)": {
-        "P@10": 0.632,
-        "nDCG@10": 0.569,
-        "MRR": 0.848
+        "P@10": 0.543,
+        "nDCG@10": 0.486,
+        "MRR": 0.7,
+        "P@10_ci": [
+          0.463,
+          0.622
+        ],
+        "nDCG@10_ci": [
+          0.433,
+          0.54
+        ]
       },
       "BM25 по тексту резюме": {
-        "P@10": 0.395,
-        "nDCG@10": 0.327,
-        "MRR": 0.632
+        "P@10": 0.322,
+        "nDCG@10": 0.296,
+        "MRR": 0.468,
+        "P@10_ci": [
+          0.253,
+          0.398
+        ],
+        "nDCG@10_ci": [
+          0.245,
+          0.35
+        ]
       },
       "Наш скоринг без теста (самооценка)": {
-        "P@10": 0.745,
-        "nDCG@10": 0.63,
-        "MRR": 0.893
+        "P@10": 0.768,
+        "nDCG@10": 0.738,
+        "MRR": 0.954,
+        "P@10_ci": [
+          0.693,
+          0.835
+        ],
+        "nDCG@10_ci": [
+          0.69,
+          0.784
+        ]
       },
       "Наш скоринг без ФСП": {
-        "P@10": 0.848,
-        "nDCG@10": 0.75,
-        "MRR": 0.931
+        "P@10": 0.83,
+        "nDCG@10": 0.759,
+        "MRR": 0.915,
+        "P@10_ci": [
+          0.753,
+          0.898
+        ],
+        "nDCG@10_ci": [
+          0.711,
+          0.806
+        ]
       },
       "Наш скоринг (полный)": {
-        "P@10": 0.835,
-        "nDCG@10": 0.748,
-        "MRR": 0.917
+        "P@10": 0.815,
+        "nDCG@10": 0.76,
+        "MRR": 0.901,
+        "P@10_ci": [
+          0.733,
+          0.887
+        ],
+        "nDCG@10_ci": [
+          0.708,
+          0.809
+        ]
+      }
+    },
+    "paired_diff": {
+      "Наш скоринг без ФСП": {
+        "P@10": {
+          "mean": -0.015,
+          "ci": [
+            -0.037,
+            0.005
+          ],
+          "significant": false
+        },
+        "nDCG@10": {
+          "mean": 0.001,
+          "ci": [
+            -0.014,
+            0.015
+          ],
+          "significant": false
+        }
+      },
+      "Ключевые слова (как hh)": {
+        "P@10": {
+          "mean": 0.272,
+          "ci": [
+            0.2,
+            0.348
+          ],
+          "significant": true
+        },
+        "nDCG@10": {
+          "mean": 0.274,
+          "ci": [
+            0.202,
+            0.345
+          ],
+          "significant": true
+        }
+      },
+      "Наш скоринг без теста (самооценка)": {
+        "P@10": {
+          "mean": 0.048,
+          "ci": [
+            -0.0,
+            0.092
+          ],
+          "significant": false
+        },
+        "nDCG@10": {
+          "mean": 0.022,
+          "ci": [
+            -0.017,
+            0.06
+          ],
+          "significant": false
+        }
       }
     },
     "in_category_spearman": {
-      "full": 0.577,
-      "no_fsp": 0.55,
-      "fsp_only": 0.226
+      "full": 0.561,
+      "no_fsp": 0.54,
+      "fsp_only": 0.189
     },
-    "categories": 20
+    "in_category_ci": {
+      "full": [
+        0.521,
+        0.6
+      ],
+      "no_fsp": [
+        0.499,
+        0.58
+      ],
+      "fsp_only": [
+        0.123,
+        0.259
+      ]
+    },
+    "in_category_diff_full_minus_no_fsp": {
+      "mean": 0.021,
+      "ci": [
+        0.003,
+        0.044
+      ],
+      "significant": true
+    },
+    "categories": 20,
+    "fsp_sweep": [
+      {
+        "weight": 0.0,
+        "P@10": 0.83,
+        "nDCG@10": 0.759
+      },
+      {
+        "weight": 0.03,
+        "P@10": 0.818,
+        "nDCG@10": 0.764
+      },
+      {
+        "weight": 0.05,
+        "P@10": 0.815,
+        "nDCG@10": 0.76
+      },
+      {
+        "weight": 0.1,
+        "P@10": 0.782,
+        "nDCG@10": 0.744
+      }
+    ],
+    "sensitivity": {
+      "strict": {
+        "Ключевые слова (как hh)": {
+          "P@10": 0.328,
+          "nDCG@10": 0.354
+        },
+        "BM25 по тексту резюме": {
+          "P@10": 0.175,
+          "nDCG@10": 0.228
+        },
+        "Наш скоринг без теста (самооценка)": {
+          "P@10": 0.51,
+          "nDCG@10": 0.561
+        },
+        "Наш скоринг без ФСП": {
+          "P@10": 0.662,
+          "nDCG@10": 0.67
+        },
+        "Наш скоринг (полный)": {
+          "P@10": 0.662,
+          "nDCG@10": 0.665
+        }
+      },
+      "soft": {
+        "Ключевые слова (как hh)": {
+          "P@10": 0.6,
+          "nDCG@10": 0.508
+        },
+        "BM25 по тексту резюме": {
+          "P@10": 0.355,
+          "nDCG@10": 0.306
+        },
+        "Наш скоринг без теста (самооценка)": {
+          "P@10": 0.81,
+          "nDCG@10": 0.741
+        },
+        "Наш скоринг без ФСП": {
+          "P@10": 0.86,
+          "nDCG@10": 0.762
+        },
+        "Наш скоринг (полный)": {
+          "P@10": 0.848,
+          "nDCG@10": 0.763
+        }
+      }
+    },
+    "sensitivity_order_kept": {
+      "strict": {
+        "ours>keywords": true,
+        "ours>bm25": true,
+        "test>self": true
+      },
+      "soft": {
+        "ours>keywords": true,
+        "ours>bm25": true,
+        "test>self": true
+      }
+    },
+    "adaptation": {
+      "companies": 40,
+      "rounds": 8,
+      "per_round": 10,
+      "adaptive": [
+        0.572,
+        0.42,
+        0.36,
+        0.297,
+        0.277,
+        0.237,
+        0.23,
+        0.205
+      ],
+      "adaptive_total": 0.325,
+      "fixed": [
+        0.572,
+        0.415,
+        0.32,
+        0.26,
+        0.222,
+        0.16,
+        0.14,
+        0.185
+      ],
+      "fixed_total": 0.284,
+      "diff_total": {
+        "mean": 0.041,
+        "ci": [
+          0.03,
+          0.052
+        ],
+        "significant": true
+      },
+      "diff_late": {
+        "mean": 0.061,
+        "ci": [
+          0.04,
+          0.082
+        ],
+        "significant": true
+      }
+    }
   },
   "nlp": {
-    "cases": 68,
-    "handwritten": 8,
-    "skills_precision": 0.997,
-    "skills_recall": 1.0,
-    "skills_f1": 0.998,
-    "specialization_acc": 1.0,
-    "grade_acc": 1.0,
-    "salary_acc": 1.0,
-    "format_acc": 1.0,
-    "handwritten_skills_f1": 0.986,
-    "handwritten_spec_acc": 1.0
+    "llm": true,
+    "llm_provider": "gigachat",
+    "templates": {
+      "rules": {
+        "cases": 68,
+        "skills_precision": 1.0,
+        "skills_recall": 1.0,
+        "skills_f1": 1.0,
+        "must_nice_acc": 0.994,
+        "specialization_acc": 1.0,
+        "grade_acc": 1.0,
+        "salary_acc": 1.0,
+        "format_acc": 1.0
+      }
+    },
+    "dev": {
+      "rules": {
+        "cases": 40,
+        "skills_precision": 0.982,
+        "skills_recall": 0.988,
+        "skills_f1": 0.985,
+        "must_nice_acc": 0.97,
+        "specialization_acc": 0.975,
+        "grade_acc": 1.0,
+        "salary_acc": 1.0,
+        "format_acc": 1.0
+      },
+      "rules+llm": {
+        "cases": 40,
+        "skills_precision": 0.966,
+        "skills_recall": 0.988,
+        "skills_f1": 0.977,
+        "must_nice_acc": 0.976,
+        "specialization_acc": 1.0,
+        "grade_acc": 1.0,
+        "salary_acc": 0.975,
+        "format_acc": 1.0
+      }
+    },
+    "holdout": {
+      "rules": {
+        "cases": 20,
+        "skills_precision": 0.958,
+        "skills_recall": 0.872,
+        "skills_f1": 0.913,
+        "must_nice_acc": 1.0,
+        "specialization_acc": 1.0,
+        "grade_acc": 0.875,
+        "salary_acc": 1.0,
+        "format_acc": 1.0
+      },
+      "rules+llm": {
+        "cases": 20,
+        "skills_precision": 0.923,
+        "skills_recall": 0.923,
+        "skills_f1": 0.923,
+        "must_nice_acc": 1.0,
+        "specialization_acc": 1.0,
+        "grade_acc": 0.938,
+        "salary_acc": 1.0,
+        "format_acc": 1.0
+      }
+    },
+    "handwritten": 8
+  },
+  "human": {
+    "version": "5ca34e9f2a39",
+    "pairs": 100,
+    "labelers": 0
+  },
+  "resume": {
+    "dev": {
+      "resumes": 15,
+      "fields": {
+        "full_name": 1.0,
+        "email": 1.0,
+        "phone": 1.0,
+        "telegram": 1.0,
+        "city": 1.0,
+        "experience": 1.0,
+        "specialization": 1.0
+      },
+      "skills_precision": 1.0,
+      "skills_recall": 0.988,
+      "skills_f1": 0.994,
+      "errors": []
+    },
+    "holdout": {
+      "resumes": 6,
+      "fields": {
+        "full_name": 0.833,
+        "email": 1.0,
+        "phone": 1.0,
+        "telegram": 1.0,
+        "city": 1.0,
+        "experience": 0.667,
+        "specialization": 1.0
+      },
+      "skills_precision": 1.0,
+      "skills_recall": 0.968,
+      "skills_f1": 0.984,
+      "errors": [
+        "holdout_01_plain.pdf: full_name",
+        "holdout_01_plain.pdf: experience",
+        "holdout_02_sidebar.pdf: experience"
+      ]
+    }
+  },
+  "pilot": {
+    "sessions": 0,
+    "candidates": 0
   }
 }

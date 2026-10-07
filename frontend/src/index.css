@@ -17,13 +17,14 @@
   --color-brand-700: #2719b4;
   --color-brand-800: #1e1489;
   --color-brand-900: #160f5e;
-  --color-accent-500: #ec1d35;
+  --color-accent-500: #ec1d35; /* brand red: fills, icons, large text */
+  --color-accent-600: #c8102e; /* red text on light backgrounds: 5.2:1 on accent-50 */
   --color-accent-50: #fdeef0;
   --color-ink: #1b1c21;
   --color-muted: #66676e;
   --color-line: #e6e6eb;
   --color-surface: #f6f6f9;
-  --color-ok: #0b8a5f;
+  --color-ok: #087a54; /* 4.8:1 on ok-50, 5.4:1 on white */
   --color-ok-50: #e7f6f0;
   --color-warn: #b45309;
   --color-warn-50: #fdf4e3;

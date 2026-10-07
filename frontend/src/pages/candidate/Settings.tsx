@@ -62,9 +62,9 @@ export function CandidateSettings() {
             <Toggle checked={p.privacy.show_city} onChange={(v) => privacy.mutate({ privacy: { show_city: v } })} label="Показывать город" />
             <Toggle checked={p.privacy.show_fsp} onChange={(v) => privacy.mutate({ privacy: { show_fsp: v } })} label="Показывать достижения ФСП" />
             <Toggle checked={p.privacy.show_companies} onChange={(v) => privacy.mutate({ privacy: { show_companies: v } })} label="Показывать названия прошлых работодателей" hint="По умолчанию названия скрыты." />
-            <Field label="Минимальная зарплата для приглашений, ₽" hint="Приглашения с вилкой ниже будут помечены. Работодатель не видит эту сумму.">
+            <Field label="Минимальная зарплата для приглашений, ₽/мес до НДФЛ" hint="Приглашения с вилкой ниже будут помечены. Работодатель не видит эту сумму.">
               <div className="flex gap-2">
-                <Input type="number" step={5000} value={minSalary} onChange={(e) => setMinSalary(e.target.value)} />
+                <Input type="number" step={1000} value={minSalary} onChange={(e) => setMinSalary(e.target.value)} />
                 <Button variant="secondary" onClick={() => privacy.mutate({ min_salary_for_invites: minSalary ? Number(minSalary) : null })}>
                   Сохранить
                 </Button>

@@ -4,6 +4,7 @@ from typing import Literal
 from fastapi import APIRouter, File, Response, UploadFile
 from pydantic import BaseModel, Field
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from app.api.deps import AUTH_ERRORS, DB, ERRORS_404, CurrentCandidate, err
 from app.catalog import GRADE_BY_ID, SKILL_BY_ID, SPEC_BY_ID
@@ -337,10 +338,13 @@ def my_invitations(cand: CurrentCandidate, db: DB):
     rows = db.scalars(select(Invitation).where(Invitation.candidate_id == cand.id)
                       .order_by(Invitation.created_at.desc())).all()
     from app.modules.trust import trust_for
+    trust: dict[int, dict] = {}  # one trust computation per company, not per invitation
     out = []
     for inv in rows:
+        if inv.company_id not in trust:
+            trust[inv.company_id] = trust_for(db, inv.company)
         item = invitation_out(inv, inv.company)
-        item["company"]["trust"] = trust_for(db, inv.company)
+        item["company"]["trust"] = trust[inv.company_id]
         out.append(item)
     return out
 
@@ -390,7 +394,8 @@ def complain(inv_id: int, data: ComplaintIn, cand: CurrentCandidate, db: DB):
 
 @router.get("/vacancies", summary="Опубликованные вакансии с оценкой соответствия моему профилю")
 def vacancies(cand: CurrentCandidate, db: DB, specialization: str | None = None, only_matching: bool = False):
-    q = select(Vacancy).where(Vacancy.status == "published").order_by(Vacancy.created_at.desc())
+    q = (select(Vacancy).where(Vacancy.status == "published").options(selectinload(Vacancy.company))
+         .order_by(Vacancy.created_at.desc()))
     if specialization:
         q = q.where(Vacancy.specialization == specialization)
     rows = db.scalars(q).all()
@@ -399,12 +404,17 @@ def vacancies(cand: CurrentCandidate, db: DB, specialization: str | None = None,
     view = candidate_view(cand)
     out = []
     from app.modules.trust import trust_for
+    # the trust score runs several queries (invitations, complaints, market salaries): once per company, not per
+    # vacancy - this endpoint was the slowest one under the load test (validation/load.py)
+    trust: dict[int, dict] = {}
     for v in rows:
         s = score(view, need_spec(v)) if cand.grade else None
         if only_matching and (s is None or v.specialization != cand.specialization):
             continue
+        if v.company_id not in trust:
+            trust[v.company_id] = trust_for(db, v.company)
         out.append({**vacancy_out(v), "match": s, "application_status": applied.get(v.id),
-                    "company_trust": trust_for(db, v.company)})
+                    "company_trust": trust[v.company_id]})
     if only_matching:
         out.sort(key=lambda x: -(x["match"] or {}).get("score", 0))
     return out

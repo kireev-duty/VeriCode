@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { createContext, useCallback, useContext, useEffect, useMemo, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { api, getToken, setToken } from '../api/client'
 import type { User } from '../api/types'
 
@@ -15,19 +15,24 @@ const AuthContext = createContext<AuthState | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const qc = useQueryClient()
+  // The token lives in React state as well as in localStorage: signing in must re-render the provider. Otherwise
+  // the ['me'] observer stays bound to the query removed by qc.clear() and the next route sees no user
+  // (found by the e2e scenario: login and e-mail confirmation bounced back to /login).
+  const [token, setTokenState] = useState(getToken)
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['me'],
+    queryKey: ['me', token],
     queryFn: () => api.get<User>('/api/auth/me'),
-    enabled: !!getToken(),
+    enabled: !!token,
     retry: false,
     staleTime: 60_000,
   })
 
   const signIn = useCallback(
-    (token: string, user: User) => {
-      setToken(token)
-      qc.clear()
-      qc.setQueryData(['me'], user)
+    (newToken: string, user: User) => {
+      setToken(newToken)
+      qc.clear() // nothing of the previous account survives
+      qc.setQueryData(['me', newToken], user)
+      setTokenState(newToken)
     },
     [qc],
   )
@@ -35,7 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(() => {
     setToken(null)
     qc.clear()
-    qc.setQueryData(['me'], null)
+    setTokenState(null)
   }, [qc])
 
   useEffect(() => {
@@ -46,13 +51,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<AuthState>(
     () => ({
-      user: getToken() ? (data ?? null) : null,
-      loading: !!getToken() && isLoading,
+      user: token ? (data ?? null) : null,
+      loading: !!token && isLoading,
       signIn,
       signOut,
       refresh: () => void refetch(),
     }),
-    [data, isLoading, signIn, signOut, refetch],
+    [token, data, isLoading, signIn, signOut, refetch],
   )
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

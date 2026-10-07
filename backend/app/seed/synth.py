@@ -160,13 +160,16 @@ def true_params(bank: list[cat.BankItem], rng: random.Random, noise_b: float = 0
 
 def run_test(rng: random.Random, c: SynthCandidate, bank: list[cat.BankItem], truth: dict[str, ItemParams],
              target: str, blueprint: dict[str, float], leaked: set[str] | None = None,
-             carry: list | None = None) -> tuple[cat.Decision, list]:
+             carry: list | None = None, exposure: cat.ExposureTracker | None = None) -> tuple[cat.Decision, list]:
     """Simulates one adaptive test session. leaked: item keys whose answers the candidate knows in advance;
-    carry: responses of the previous attempt of the same measurement episode (continued, not repeated)."""
+    carry: responses of the previous attempt of the same measurement episode (continued, not repeated);
+    exposure: shared tracker of the population - the session is selected under exposure control and recorded."""
     carry = list(carry or [])
     responses: list[cat.Response] = list(carry)
+    rates = exposure.rates(c.spec) if exposure else None
     while True:
-        it = cat.select_next(bank, blueprint, responses, cat.selection_theta(responses, target), rng)
+        it = cat.select_next(bank, blueprint, responses, cat.selection_theta(responses, target), rng,
+                             exposure=rates)
         if it is None:
             break
         if leaked and it.key in leaked:
@@ -177,13 +180,16 @@ def run_test(rng: random.Random, c: SynthCandidate, bank: list[cat.BankItem], tr
         responses.append(cat.Response(it, ok))
         if cat.should_stop(responses, target, new_count=len(responses) - len(carry) if carry else None):
             break
+    if exposure:
+        exposure.record(c.spec, (r.item.key for r in responses[len(carry):]))
     return cat.decide(responses, target), responses
 
 
 CARRY_OVER = False  # evaluated alternative: -22% items, -5 pp grade accuracy (docs/validation)
 
 
-def assign_grade(rng: random.Random, c: SynthCandidate, bank, truth, carry_over: bool | None = None) -> dict:
+def assign_grade(rng: random.Random, c: SynthCandidate, bank, truth, carry_over: bool | None = None,
+                 exposure: cat.ExposureTracker | None = None) -> dict:
     """Candidate flow per policy: test on the declared grade; if not confirmed - immediately one grade lower until
     a grade is confirmed (intern always is); if confirmed with margin ("upgrade_available") - the candidate takes
     the offered test one grade higher and keeps it if confirmed. Follow-up attempts of the same episode continue
@@ -196,10 +202,11 @@ def assign_grade(rng: random.Random, c: SynthCandidate, bank, truth, carry_over:
     going_up = False
     prev: list = []
     while True:
-        d, resp = run_test(rng, c, bank, truth, target, bp, carry=prev if carry_over else None)
+        d, resp = run_test(rng, c, bank, truth, target, bp, carry=prev if carry_over else None, exposure=exposure)
         attempts.append({"target": target, "outcome": d.outcome, "theta": d.theta, "se": d.se,
                          "items": len(resp) - (len(prev) if carry_over else 0),
-                         "p_target": d.p_target, "skill_theta": d.skill_theta})
+                         "p_target": d.p_target, "skill_theta": d.skill_theta,
+                         "keys": [r.item.key for r in resp[len(prev) if carry_over else 0:]]})
         prev = resp
         if d.grade is not None:
             best = {"grade": d.grade, "theta": d.theta, "se": d.se, "skill_theta": d.skill_theta, "responses": resp}

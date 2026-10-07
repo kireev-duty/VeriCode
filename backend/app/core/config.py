@@ -38,9 +38,24 @@ class Settings(BaseSettings):
     invitation_weekly_quota: int = 20
     invitation_ttl_days: int = 14
 
-    llm_provider: str = "none"  # none | anthropic | gigachat | yandex
-    llm_api_key: str = ""
-    llm_model: str = ""
+    # Optional LLM over the rule-based NLP (app/modules/llm.py); without a key everything runs on the rules.
+    llm_provider: str = "none"  # none | gigachat | yandex | local, or a fallback chain: "gigachat,local"
+    llm_api_key: str = ""  # GigaChat: authorization key (base64); YandexGPT: API key of a service account
+    llm_model: str = ""  # default: GigaChat / yandexgpt-lite/latest
+    llm_scope: str = "GIGACHAT_API_PERS"  # GigaChat: GIGACHAT_API_PERS | GIGACHAT_API_B2B | GIGACHAT_API_CORP
+    llm_folder_id: str = ""  # YandexGPT: cloud folder id
+    llm_verify_ssl: bool = True  # GigaChat uses the Russian Trusted Root CA: mount it and set LLM_CA_BUNDLE
+    llm_ca_bundle: str = ""
+    llm_timeout: float = 12.0
+    # Open-weight model behind an OpenAI-compatible API (docker compose --profile local-llm starts Ollama)
+    local_llm_url: str = "http://localhost:11434/v1"
+    local_llm_model: str = "qwen3:4b-instruct"  # Qwen3-4B-Instruct-2507, Apache-2.0, ~2.5 GB
+    local_llm_key: str = ""
+    local_llm_timeout: float = 120.0  # CPU inference: tens of seconds per answer
+
+    # Anonymised export of pilot test sessions (GET /api/assessment/pilot/export, header X-Pilot-Token).
+    # Empty: the export is disabled.
+    pilot_export_token: str = ""
 
 
 @lru_cache

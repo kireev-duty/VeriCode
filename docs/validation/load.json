@@ -1,0 +1,74 @@
+{
+ "generated_at": "2026-10-06 14:09 UTC",
+ "url": "http://localhost:8080",
+ "users": 50,
+ "seconds": 182,
+ "requests": 6744,
+ "rps": 37.1,
+ "error_share": 0.0,
+ "operations": {
+  "candidate card": {
+   "requests": 900,
+   "p50_ms": 35,
+   "p95_ms": 102,
+   "p99_ms": 156,
+   "errors": 0
+  },
+  "category": {
+   "requests": 449,
+   "p50_ms": 77,
+   "p95_ms": 135,
+   "p99_ms": 404,
+   "errors": 0
+  },
+  "dashboard": {
+   "requests": 693,
+   "p50_ms": 36,
+   "p95_ms": 118,
+   "p99_ms": 214,
+   "errors": 0
+  },
+  "needs list": {
+   "requests": 35,
+   "p50_ms": 374,
+   "p95_ms": 486,
+   "p99_ms": 544,
+   "errors": 0
+  },
+  "profile": {
+   "requests": 407,
+   "p50_ms": 28,
+   "p95_ms": 85,
+   "p99_ms": 152,
+   "errors": 0
+  },
+  "search": {
+   "requests": 1452,
+   "p50_ms": 70,
+   "p95_ms": 143,
+   "p99_ms": 236,
+   "errors": 0
+  },
+  "shortlist": {
+   "requests": 1658,
+   "p50_ms": 104,
+   "p95_ms": 218,
+   "p99_ms": 325,
+   "errors": 0
+  },
+  "test blueprint": {
+   "requests": 434,
+   "p50_ms": 61,
+   "p95_ms": 109,
+   "p99_ms": 206,
+   "errors": 0
+  },
+  "vacancies": {
+   "requests": 716,
+   "p50_ms": 135,
+   "p95_ms": 376,
+   "p99_ms": 1320,
+   "errors": 0
+  }
+ }
+}

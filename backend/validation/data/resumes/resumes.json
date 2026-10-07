@@ -1,0 +1,574 @@
+[
+ {
+  "file": "resume_01_plain.pdf",
+  "layout": "plain",
+  "full_name": "Анна Кравцова",
+  "email": "anna.kravtsova@mail.example",
+  "phone": "+79123456780",
+  "telegram": "@kravtsova_dev",
+  "city": "Екатеринбург",
+  "specialization": "backend",
+  "skills": [
+   "python",
+   "django",
+   "postgresql",
+   "redis",
+   "docker",
+   "git"
+  ],
+  "jobs": [
+   [
+    "Python-разработчик",
+    "ООО «ЛогистикТех»",
+    [
+     2021,
+     3,
+     null,
+     0
+    ]
+   ],
+   [
+    "Младший разработчик",
+    "Студия «Пиксель»",
+    [
+     2019,
+     7,
+     2021,
+     2
+    ]
+   ]
+  ]
+ },
+ {
+  "file": "resume_02_sidebar.pdf",
+  "layout": "sidebar",
+  "full_name": "Дмитрий Орлов",
+  "email": "d.orlov@example.org",
+  "phone": "+79991234567",
+  "telegram": "@orlov_front",
+  "city": "Москва",
+  "specialization": "frontend",
+  "skills": [
+   "javascript",
+   "typescript",
+   "react",
+   "redux",
+   "html_css",
+   "webpack"
+  ],
+  "jobs": [
+   [
+    "Frontend-разработчик",
+    "Банк «Северный»",
+    [
+     2020,
+     2,
+     null,
+     0
+    ]
+   ],
+   [
+    "Верстальщик",
+    "Агентство «Лендинг Про»",
+    [
+     2018,
+     9,
+     2020,
+     1
+    ]
+   ]
+  ]
+ },
+ {
+  "file": "resume_03_hh.pdf",
+  "layout": "hh",
+  "full_name": "Мария Белова",
+  "email": "maria.belova@example.com",
+  "phone": "+79215551234",
+  "telegram": "",
+  "city": "Санкт-Петербург",
+  "specialization": "qa",
+  "skills": [
+   "test_design",
+   "api_testing",
+   "sql",
+   "autotests"
+  ],
+  "jobs": [
+   [
+    "QA-инженер",
+    "ООО «ФинСофт»",
+    [
+     2022,
+     1,
+     null,
+     0
+    ]
+   ],
+   [
+    "Тестировщик",
+    "ИП Сидоров",
+    [
+     2020,
+     5,
+     2021,
+     12
+    ]
+   ]
+  ]
+ },
+ {
+  "file": "resume_04_english.pdf",
+  "layout": "english",
+  "full_name": "Ivan Sokolov",
+  "email": "ivan.sokolov@example.net",
+  "phone": "+79037771122",
+  "telegram": "@isokolov",
+  "city": "Казань",
+  "specialization": "devops",
+  "skills": [
+   "linux",
+   "docker",
+   "kubernetes",
+   "terraform",
+   "ci_cd",
+   "monitoring",
+   "bash"
+  ],
+  "jobs": [
+   [
+    "DevOps Engineer",
+    "CloudCore LLC",
+    [
+     2021,
+     9,
+     null,
+     0
+    ]
+   ],
+   [
+    "System Administrator",
+    "Kazan IT Park",
+    [
+     2017,
+     6,
+     2021,
+     8
+    ]
+   ]
+  ]
+ },
+ {
+  "file": "resume_05_prose.pdf",
+  "layout": "prose",
+  "full_name": "Елена Смирнова",
+  "email": "smirnova.e@example.ru",
+  "phone": "+79161234567",
+  "telegram": "@esmirnova_ds",
+  "city": "Новосибирск",
+  "specialization": "data",
+  "skills": [
+   "ml",
+   "python",
+   "pandas",
+   "sql",
+   "statistics"
+  ],
+  "jobs": [
+   [
+    "Data Scientist",
+    "Ритейл-сеть «Корзина»",
+    [
+     2020,
+     1,
+     null,
+     0
+    ]
+   ],
+   [
+    "Аналитик данных",
+    "НИИ прикладной математики",
+    [
+     2016,
+     1,
+     2019,
+     12
+    ]
+   ]
+  ]
+ },
+ {
+  "file": "resume_06_plain.pdf",
+  "layout": "plain",
+  "full_name": "Сергей Ким",
+  "email": "kim.sergey@example.com",
+  "phone": "+79810001122",
+  "telegram": "@sergeykim",
+  "city": "Краснодар",
+  "specialization": "backend",
+  "skills": [
+   "go",
+   "grpc",
+   "postgresql",
+   "kafka",
+   "kubernetes",
+   "microservices"
+  ],
+  "jobs": [
+   [
+    "Go-разработчик",
+    "Маркетплейс «Ярмарка»",
+    [
+     2022,
+     4,
+     null,
+     0
+    ]
+   ],
+   [
+    "Backend-разработчик",
+    "Стартап «Доставка 24»",
+    [
+     2019,
+     10,
+     2022,
+     3
+    ]
+   ]
+  ]
+ },
+ {
+  "file": "resume_07_sidebar.pdf",
+  "layout": "sidebar",
+  "full_name": "Ольга Миронова",
+  "email": "o.mironova@example.org",
+  "phone": "+79172223344",
+  "telegram": "@olga_qa",
+  "city": "Самара",
+  "specialization": "qa",
+  "skills": [
+   "python",
+   "autotests",
+   "api_testing",
+   "ci_cd",
+   "load_testing"
+  ],
+  "jobs": [
+   [
+    "Инженер по автоматизации тестирования",
+    "Телеком «Волна»",
+    [
+     2019,
+     1,
+     null,
+     0
+    ]
+   ],
+   [
+    "Тестировщик",
+    "Интернет-магазин «Техно»",
+    [
+     2016,
+     1,
+     2018,
+     12
+    ]
+   ]
+  ]
+ },
+ {
+  "file": "resume_08_hh.pdf",
+  "layout": "hh",
+  "full_name": "Артём Волков",
+  "email": "artem.volkov@example.com",
+  "phone": "+79034445566",
+  "telegram": "",
+  "city": "Москва",
+  "specialization": "backend",
+  "skills": [
+   "java",
+   "spring",
+   "postgresql",
+   "kafka",
+   "microservices",
+   "kubernetes"
+  ],
+  "jobs": [
+   [
+    "Ведущий Java-разработчик",
+    "Банк «Столица»",
+    [
+     2018,
+     3,
+     null,
+     0
+    ]
+   ],
+   [
+    "Java-разработчик",
+    "Интегратор «СофтЛайн Плюс»",
+    [
+     2014,
+     9,
+     2018,
+     2
+    ]
+   ]
+  ]
+ },
+ {
+  "file": "resume_09_english.pdf",
+  "layout": "english",
+  "full_name": "Alexey Petrov",
+  "email": "a.petrov@example.io",
+  "phone": "+79998887766",
+  "telegram": "@apetrov_ml",
+  "city": "Москва",
+  "specialization": "data",
+  "skills": [
+   "python",
+   "ml",
+   "dl",
+   "cv",
+   "docker",
+   "sql"
+  ],
+  "jobs": [
+   [
+    "Machine Learning Engineer",
+    "VisionLab",
+    [
+     2021,
+     2,
+     null,
+     0
+    ]
+   ],
+   [
+    "Junior Data Scientist",
+    "RetailAI",
+    [
+     2019,
+     6,
+     2021,
+     1
+    ]
+   ]
+  ]
+ },
+ {
+  "file": "resume_10_prose.pdf",
+  "layout": "prose",
+  "full_name": "Наталья Зайцева",
+  "email": "zaytseva.dev@example.ru",
+  "phone": "+79507654321",
+  "telegram": "@nzaytseva",
+  "city": "Воронеж",
+  "specialization": "frontend",
+  "skills": [
+   "vue",
+   "typescript",
+   "html_css",
+   "webpack"
+  ],
+  "jobs": [
+   [
+    "Frontend-разработчик",
+    "Студия «Вектор»",
+    [
+     2021,
+     1,
+     null,
+     0
+    ]
+   ]
+  ]
+ },
+ {
+  "file": "resume_11_plain.pdf",
+  "layout": "plain",
+  "full_name": "Павел Никитин",
+  "email": "pnikitin@example.com",
+  "phone": "+79127778899",
+  "telegram": "",
+  "city": "Пермь",
+  "specialization": "devops",
+  "skills": [
+   "linux",
+   "terraform",
+   "docker",
+   "kubernetes",
+   "monitoring",
+   "cloud"
+  ],
+  "jobs": [
+   [
+    "SRE-инженер",
+    "Онлайн-кинотеатр «Кадр»",
+    [
+     2020,
+     11,
+     null,
+     0
+    ]
+   ],
+   [
+    "Системный администратор Linux",
+    "Хостинг «Облако-М»",
+    [
+     2015,
+     4,
+     2020,
+     10
+    ]
+   ]
+  ]
+ },
+ {
+  "file": "resume_12_sidebar.pdf",
+  "layout": "sidebar",
+  "full_name": "Виктория Лебедева",
+  "email": "v.lebedeva@example.net",
+  "phone": "+79601012030",
+  "telegram": "@vika_ds",
+  "city": "Томск",
+  "specialization": "data",
+  "skills": [
+   "python",
+   "pandas",
+   "statistics",
+   "sql",
+   "ml"
+  ],
+  "jobs": [
+   [
+    "Стажёр-аналитик",
+    "Университетская лаборатория данных",
+    [
+     2024,
+     9,
+     null,
+     0
+    ]
+   ]
+  ]
+ },
+ {
+  "file": "resume_13_hh.pdf",
+  "layout": "hh",
+  "full_name": "Роман Егоров",
+  "email": "roman.egorov@example.com",
+  "phone": "+79129090807",
+  "telegram": "@regorov",
+  "city": "Уфа",
+  "specialization": "backend",
+  "skills": [
+   "php",
+   "laravel",
+   "mysql",
+   "rest",
+   "docker",
+   "redis"
+  ],
+  "jobs": [
+   [
+    "PHP-разработчик",
+    "Агрегатор «Тур-Поиск»",
+    [
+     2020,
+     1,
+     null,
+     0
+    ]
+   ],
+   [
+    "Веб-программист",
+    "Студия «Сайт за неделю»",
+    [
+     2017,
+     1,
+     2019,
+     12
+    ]
+   ]
+  ]
+ },
+ {
+  "file": "resume_14_english.pdf",
+  "layout": "english",
+  "full_name": "Kirill Fedorov",
+  "email": "kfedorov@example.dev",
+  "phone": "+79213215476",
+  "telegram": "@kfedorov_qa",
+  "city": "Санкт-Петербург",
+  "specialization": "qa",
+  "skills": [
+   "java",
+   "autotests",
+   "api_testing",
+   "sql",
+   "ci_cd",
+   "test_design"
+  ],
+  "jobs": [
+   [
+    "QA Automation Engineer",
+    "FinTech Hub",
+    [
+     2022,
+     3,
+     null,
+     0
+    ]
+   ],
+   [
+    "Manual QA Engineer",
+    "GameDev Studio",
+    [
+     2020,
+     8,
+     2022,
+     2
+    ]
+   ]
+  ]
+ },
+ {
+  "file": "resume_15_prose.pdf",
+  "layout": "prose",
+  "full_name": "Тимур Ахметов",
+  "email": "akhmetov.t@example.ru",
+  "phone": "+79170001212",
+  "telegram": "@timur_ops",
+  "city": "Казань",
+  "specialization": "devops",
+  "skills": [
+   "kubernetes",
+   "ci_cd",
+   "terraform",
+   "monitoring"
+  ],
+  "jobs": [
+   [
+    "DevOps-инженер",
+    "Финтех «Перевод»",
+    [
+     2019,
+     5,
+     null,
+     0
+    ]
+   ],
+   [
+    "Инженер технической поддержки",
+    "Провайдер «Сеть+»",
+    [
+     2017,
+     3,
+     2019,
+     4
+    ]
+   ]
+  ]
+ }
+]

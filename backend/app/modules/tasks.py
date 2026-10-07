@@ -1,6 +1,8 @@
 """Regular short tasks: once a week a candidate gets a task from an employer of a matching category.
 
-"approach" tasks are graded by a transparent rubric (key points with synonyms); "quiz" tasks are auto-checked.
+"approach" tasks are graded by a transparent rubric (key points with synonyms); with an LLM configured a point also
+counts when the answer covers it in other words and the model cites a quote that is really in the answer.
+"quiz" tasks are auto-checked.
 The score feeds the profile freshness index shown to employers ("подтверждён активностью N дней назад").
 """
 
@@ -13,6 +15,7 @@ from sqlalchemy.orm import Session
 from app.catalog import GRADE_ORDER
 from app.core.db import utcnow
 from app.models import CandidateProfile, RegularTask, TaskSubmission
+from app.modules import llm
 
 OFFER_EVERY_DAYS = 7
 SCORE_EMA = 0.5
@@ -54,13 +57,15 @@ def grade_answer(task: RegularTask, answer: str) -> tuple[float, list[dict]]:
             ok = False
         return (1.0 if ok else 0.0), [{"point": "Верный вариант", "hit": ok}]
     text = answer.lower().replace("ё", "е")
+    semantic = llm.grade_approach(f"{task.title}\n{task.body}", [p["point"] for p in task.rubric], answer)
     feedback, total, got = [], 0.0, 0.0
-    for p in task.rubric:
+    for i, p in enumerate(task.rubric):
         w = float(p.get("weight", 1))
         hit = any(re.search(rf"\b{re.escape(k.lower())}", text) for k in p.get("keywords", []))
+        by_llm = bool(semantic and semantic[i] and not hit)
         total += w
-        got += w if hit else 0
-        feedback.append({"point": p["point"], "hit": hit})
+        got += w if hit or by_llm else 0
+        feedback.append({"point": p["point"], "hit": hit or by_llm, "by": "llm" if by_llm else "rules"})
     score = got / total if total else 0.0
     if len(text.strip()) < 80:  # a one-liner is not an approach
         score *= 0.5

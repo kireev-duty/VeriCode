@@ -1,12 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import clsx from 'clsx'
-import { ArrowRight, CheckCircle2, ChevronDown, Clock, Lock, Sparkles, TrendingDown, TrendingUp, XCircle } from 'lucide-react'
+import { ArrowRight, CheckCircle2, ChevronDown, Clock, Flag, Lock, MessageSquareText, Sparkles, TrendingDown, TrendingUp, XCircle } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { api, ApiError } from '../../api/client'
 import type { CandidateProfile, Eligibility, GradeId, SessionState } from '../../api/types'
 import { CodeBlock } from '../../components/CodeBlock'
-import { Alert, Badge, Button, Card, GradeBadge, Input, PageHeader, PageLoader, ProgressBar, RichText, SectionTitle } from '../../components/ui'
+import { Alert, Badge, Button, Card, Field, GradeBadge, Input, PageHeader, PageLoader, ProgressBar, RichText, SectionTitle, Select, Textarea } from '../../components/ui'
 import { useCatalog } from '../../lib/catalog'
 import { date, skillLevel, thetaPercentile } from '../../lib/format'
 
@@ -219,7 +219,7 @@ function Runner({ session }: { session: SessionState }) {
         <div className="flex items-center gap-2">
           <GradeBadge grade={session.target_grade} title={`Тест на ${session.target_grade_title}`} spec={session.specialization_title} />
         </div>
-        <div className={clsx('flex items-center gap-1.5 rounded-full px-3 py-1 font-mono text-sm', left <= 15 ? 'bg-accent-50 text-accent-500' : 'bg-white text-ink')}>
+        <div className={clsx('flex items-center gap-1.5 rounded-full px-3 py-1 font-mono text-sm', left <= 15 ? 'bg-accent-50 text-accent-600' : 'bg-white text-ink')}>
           <Clock className="size-4" />
           {Math.floor(left / 60)}:{String(left % 60).padStart(2, '0')}
         </div>
@@ -227,7 +227,9 @@ function Runner({ session }: { session: SessionState }) {
       <div className="mb-6">
         <div className="mb-1.5 flex justify-between text-xs text-muted">
           <span>Задание {item.position}</span>
-          <span>обычно {session.min_items}–{session.max_items} заданий</span>
+          <span>
+            {session.express && 'экспресс-режим для проверки · '}обычно {session.min_items}–{session.max_items} заданий
+          </span>
         </div>
         <ProgressBar value={progress} />
       </div>
@@ -321,7 +323,7 @@ function AbilityScale({ theta, ci }: { theta: number; ci: [number, number] }) {
           <div className="size-4 rounded-full border-2 border-white bg-accent-500 shadow" />
         </div>
       </div>
-      <div className="relative mt-1 h-4 text-[11px] text-muted">
+      <div className="relative mt-1 h-4 text-xs text-muted">
         {grades.map((g, i) => {
           const lo = i === 0 ? min : g.theta_min
           const hi = i + 1 < grades.length ? grades[i + 1].theta_min : max
@@ -332,6 +334,170 @@ function AbilityScale({ theta, ci }: { theta: number; ci: [number, number] }) {
           )
         })}
       </div>
+    </div>
+  )
+}
+
+// ------------------------------------------------------------------------------------------- pilot feedback
+
+interface SurveyState {
+  done: boolean
+  experience_years?: number | null
+  position?: string
+  self_grade?: GradeId | null
+  lead_grade?: GradeId | null
+  comment?: string
+}
+
+const EMPTY_SURVEY = { experience_years: '', position: '', self_grade: '', lead_grade: '', comment: '' }
+
+function PilotSurvey({ sessionId }: { sessionId: number }) {
+  const { catalog } = useCatalog()
+  const qc = useQueryClient()
+  const { data } = useQuery({
+    queryKey: ['survey', sessionId],
+    queryFn: () => api.get<SurveyState>(`/api/assessment/sessions/${sessionId}/survey`),
+  })
+  const [form, setForm] = useState(EMPTY_SURVEY)
+  const [editing, setEditing] = useState(false)
+  const save = useMutation({
+    mutationFn: () =>
+      api.post(`/api/assessment/sessions/${sessionId}/survey`, {
+        experience_years: form.experience_years === '' ? null : Number(form.experience_years),
+        position: form.position,
+        self_grade: form.self_grade || null,
+        lead_grade: form.lead_grade || null,
+        comment: form.comment,
+      }),
+    onSuccess: () => {
+      setEditing(false)
+      qc.invalidateQueries({ queryKey: ['survey', sessionId] })
+    },
+  })
+  if (!data) return null
+  if (data.done && !editing)
+    return (
+      <Card className="flex flex-wrap items-center gap-3 p-5">
+        <CheckCircle2 className="size-5 text-ok" />
+        <span className="flex-1 text-sm">Спасибо! Анкета сохранена — она помогает проверить, что тест оценивает честно.</span>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            setForm({
+              experience_years: data.experience_years == null ? '' : String(data.experience_years),
+              position: data.position ?? '',
+              self_grade: data.self_grade ?? '',
+              lead_grade: data.lead_grade ?? '',
+              comment: data.comment ?? '',
+            })
+            setEditing(true)
+          }}
+        >
+          Изменить
+        </Button>
+      </Card>
+    )
+  const set = (k: keyof typeof form) => (e: { target: { value: string } }) => setForm({ ...form, [k]: e.target.value })
+  const grades = catalog?.grades ?? []
+  return (
+    <Card className="p-6">
+      <SectionTitle label="Необязательно · 1 минута" title="Помогите проверить тест" />
+      <p className="-mt-2 mb-4 text-sm text-muted">
+        Мы сравниваем результат теста со стажем и с оценкой руководителя, чтобы убедиться, что тест не завышает и не занижает грейд. Ответы
+        используются только обезличенно и не видны работодателям.
+      </p>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Коммерческий стаж, лет">
+          <Input type="number" min={0} max={50} step={0.5} value={form.experience_years} onChange={set('experience_years')} />
+        </Field>
+        <Field label="Текущая должность">
+          <Input value={form.position} onChange={set('position')} placeholder="Например, Backend-разработчик" maxLength={120} />
+        </Field>
+        <Field label="Ваш грейд по вашему мнению">
+          <Select value={form.self_grade} onChange={set('self_grade')}>
+            <option value="">Не указывать</option>
+            {grades.map((g) => (
+              <option key={g.id} value={g.id}>
+                {g.title}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        <Field label="Грейд по оценке тимлида или руководителя" hint="Если знаете: например, по последнему ревью">
+          <Select value={form.lead_grade} onChange={set('lead_grade')}>
+            <option value="">Не знаю</option>
+            {grades.map((g) => (
+              <option key={g.id} value={g.id}>
+                {g.title}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        <Field label="Комментарий о тесте" className="sm:col-span-2">
+          <Textarea value={form.comment} onChange={set('comment')} maxLength={2000} placeholder="Что было слишком легко, слишком сложно или непонятно" />
+        </Field>
+      </div>
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <Button onClick={() => save.mutate()} loading={save.isPending} icon={<MessageSquareText className="size-4" />}>
+          Отправить анкету
+        </Button>
+        {save.error && <Alert tone="danger">{(save.error as Error).message}</Alert>}
+      </div>
+    </Card>
+  )
+}
+
+const REPORT_REASONS: { id: string; title: string }[] = [
+  { id: 'wrong_answer', title: 'Правильный ответ неверен' },
+  { id: 'unclear', title: 'Непонятная формулировка' },
+  { id: 'typo', title: 'Опечатка или ошибка в коде' },
+  { id: 'other', title: 'Другое' },
+]
+
+function ReportItem({ sessionId, position, reported }: { sessionId: number; position: number; reported: boolean }) {
+  const qc = useQueryClient()
+  const [open, setOpen] = useState(false)
+  const [reason, setReason] = useState('wrong_answer')
+  const [text, setText] = useState('')
+  const send = useMutation({
+    mutationFn: () => api.post(`/api/assessment/sessions/${sessionId}/items/${position}/report`, { reason, text }),
+    onSuccess: () => {
+      setOpen(false)
+      qc.invalidateQueries({ queryKey: ['session', String(sessionId)] })
+    },
+  })
+  if (reported)
+    return (
+      <span className="inline-flex items-center gap-1 text-xs text-muted">
+        <Flag className="size-3.5" /> Жалоба отправлена
+      </span>
+    )
+  if (!open)
+    return (
+      <button className="inline-flex items-center gap-1 text-xs text-muted hover:text-accent-600" onClick={() => setOpen(true)}>
+        <Flag className="size-3.5" /> Задание некорректно
+      </button>
+    )
+  return (
+    <div className="mt-2 w-full space-y-2 rounded-lg border border-line p-3">
+      <Select value={reason} onChange={(e) => setReason(e.target.value)} aria-label="Причина">
+        {REPORT_REASONS.map((r) => (
+          <option key={r.id} value={r.id}>
+            {r.title}
+          </option>
+        ))}
+      </Select>
+      <Textarea value={text} onChange={(e) => setText(e.target.value)} maxLength={1000} className="min-h-16" placeholder="Что не так (необязательно)" />
+      <div className="flex flex-wrap gap-2">
+        <Button size="sm" onClick={() => send.mutate()} loading={send.isPending}>
+          Отправить
+        </Button>
+        <Button size="sm" variant="ghost" onClick={() => setOpen(false)}>
+          Отмена
+        </Button>
+      </div>
+      {send.error && <Alert tone="danger">{(send.error as Error).message}</Alert>}
     </div>
   )
 }
@@ -368,6 +534,8 @@ function Result({ session }: { session: SessionState }) {
                 (r.suggested_grade
                   ? `Это не понижение: можно сразу пройти тест на ${gradeTitle(r.suggested_grade)}, а повторить попытку на ${session.target_grade_title} — через 30 дней.`
                   : 'Повторить попытку можно через 30 дней.')}
+              {r.outcome === 'not_confirmed' &&
+                ' Пока подтверждённого грейда нет, работодатели видят вас ниже подтверждённых кандидатов с пометкой «не подтверждён».'}
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
               {r.suggested_grade && (
@@ -425,6 +593,8 @@ function Result({ session }: { session: SessionState }) {
         </Card>
       </div>
 
+      <PilotSurvey sessionId={session.id} />
+
       {session.review && (
         <Card className="p-6">
           <button className="flex w-full items-center justify-between" onClick={() => setOpen(!open)}>
@@ -451,6 +621,9 @@ function Result({ session }: { session: SessionState }) {
                     </div>
                   </div>
                   {it.explanation && <p className="mt-2 text-xs text-muted">{it.explanation}</p>}
+                  <div className="mt-2 flex flex-wrap">
+                    <ReportItem sessionId={session.id} position={it.position} reported={it.reported} />
+                  </div>
                 </div>
               ))}
             </div>

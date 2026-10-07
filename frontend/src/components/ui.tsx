@@ -1,8 +1,11 @@
+import { useQueryClient, type Query, type QueryCache } from '@tanstack/react-query'
 import clsx from 'clsx'
-import { Loader2, X } from 'lucide-react'
+import { AlertTriangle, Loader2, X } from 'lucide-react'
 import {
+  isValidElement,
   useEffect,
   useId,
+  useSyncExternalStore,
   type ButtonHTMLAttributes,
   type InputHTMLAttributes,
   type ReactNode,
@@ -30,7 +33,7 @@ export function Button({ variant = 'primary', size = 'md', loading, icon, classN
           primary: 'bg-brand-500 text-white hover:bg-brand-600 active:bg-brand-700',
           secondary: 'border border-line bg-white text-ink hover:border-brand-300 hover:bg-brand-50',
           ghost: 'text-ink hover:bg-brand-50',
-          danger: 'border border-accent-500/30 bg-white text-accent-500 hover:bg-accent-50',
+          danger: 'border border-accent-500/30 bg-white text-accent-600 hover:bg-accent-50',
           dark: 'bg-ink text-white hover:bg-black',
         }[variant],
         { sm: 'h-8 px-3 text-sm', md: 'h-10 px-4 text-sm', lg: 'h-12 px-6 text-base' }[size],
@@ -90,7 +93,7 @@ export function Badge({ tone = 'muted', children, className }: { tone?: Tone; ch
           ok: 'bg-ok-50 text-ok',
           warn: 'bg-warn-50 text-warn',
           muted: 'bg-surface text-muted',
-          danger: 'bg-accent-50 text-accent-500',
+          danger: 'bg-accent-50 text-accent-600',
           ink: 'bg-ink text-white',
         }[tone],
         className,
@@ -111,7 +114,7 @@ export function Alert({ tone = 'brand', title, children, className }: { tone?: T
           ok: 'border-ok/20 bg-ok-50 text-ok',
           warn: 'border-warn/20 bg-warn-50 text-warn',
           muted: 'border-line bg-surface text-muted',
-          danger: 'border-accent-500/20 bg-accent-50 text-accent-500',
+          danger: 'border-accent-500/20 bg-accent-50 text-accent-600',
           ink: 'border-ink bg-ink text-white',
         }[tone],
         className,
@@ -127,9 +130,36 @@ export function Spinner({ className }: { className?: string }) {
   return <Loader2 className={clsx('size-5 animate-spin text-brand-500', className)} />
 }
 
+function failedQuery(cache: QueryCache): Query | undefined {
+  return cache.findAll({ type: 'active' }).find((q) => q.state.status === 'error' && q.state.fetchStatus === 'idle')
+}
+
+/** Page placeholder while data loads. If a query of the page has failed, it shows the error and a retry button
+ * instead of spinning forever (pages render it as `if (!data) return <PageLoader />`). */
 export function PageLoader() {
+  const qc = useQueryClient()
+  const cache = qc.getQueryCache()
+  const failed = useSyncExternalStore(
+    (cb) => cache.subscribe(cb),
+    () => failedQuery(cache),
+  )
+  if (failed) {
+    const message = failed.state.error instanceof Error ? failed.state.error.message : ''
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center px-4">
+        <div className="max-w-md rounded-2xl border border-line bg-white p-6 text-center">
+          <AlertTriangle className="mx-auto size-7 text-warn" />
+          <div className="mt-3 font-semibold">Не удалось загрузить данные</div>
+          <p className="mt-1 text-sm text-muted">{message || 'Проверьте соединение и попробуйте ещё раз.'}</p>
+          <Button className="mt-4" variant="secondary" onClick={() => qc.refetchQueries({ predicate: (q) => q.state.status === 'error' })}>
+            Повторить
+          </Button>
+        </div>
+      </div>
+    )
+  }
   return (
-    <div className="flex min-h-[40vh] items-center justify-center">
+    <div className="flex min-h-[40vh] items-center justify-center" role="status" aria-label="Загрузка">
       <Spinner className="size-7" />
     </div>
   )
@@ -198,19 +228,36 @@ export function ScoreRing({ value, size = 56, label }: { value: number; size?: n
 
 // ------------------------------------------------------------------------------------------- Forms
 
+const FIELD_CONTROLS: unknown[] = ['input', 'select', 'textarea']
+
+/** A labelled form row. With one input inside it is a <label>; with anything else (chips, toggles, several
+ * controls) it is a group: a <label> around buttons would name the first button after the whole row and
+ * forward every click on the caption to it. */
 export function Field({ label, hint, error, children, className }: { label?: ReactNode; hint?: ReactNode; error?: string | null; children: ReactNode; className?: string }) {
-  return (
-    <label className={clsx('block', className)}>
-      {label && <span className="mb-1.5 block text-sm font-medium">{label}</span>}
+  const captionId = useId()
+  const single = isValidElement(children) && [...FIELD_CONTROLS, Input, Select, Textarea].includes(children.type)
+  const body = (
+    <>
+      {label && (
+        <span id={captionId} className="mb-1.5 block text-sm font-medium">
+          {label}
+        </span>
+      )}
       {children}
       {hint && !error && <span className="mt-1 block text-xs text-muted">{hint}</span>}
-      {error && <span className="mt-1 block text-xs text-accent-500">{error}</span>}
-    </label>
+      {error && <span className="mt-1 block text-xs text-accent-600">{error}</span>}
+    </>
+  )
+  if (single) return <label className={clsx('block', className)}>{body}</label>
+  return (
+    <div role="group" aria-labelledby={label ? captionId : undefined} className={clsx('block', className)}>
+      {body}
+    </div>
   )
 }
 
 const inputCls =
-  'w-full rounded-xl border border-line bg-white px-3 text-sm outline-none transition placeholder:text-muted/60 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 disabled:bg-surface'
+  'w-full rounded-xl border border-line bg-white px-3 text-sm outline-none transition placeholder:text-muted/80 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 disabled:bg-surface'
 
 export function Input({ className, ...rest }: InputHTMLAttributes<HTMLInputElement>) {
   return <input className={clsx(inputCls, 'h-10', className)} {...rest} />
@@ -356,7 +403,15 @@ const GRADE_TONE: Record<string, string> = {
   senior: 'bg-brand-500 text-white border-brand-500',
 }
 
-export function GradeBadge({ grade, title, spec }: { grade: string | null; title?: string | null; spec?: string | null }) {
+export function GradeBadge({ grade, title, spec, claimed }: { grade: string | null; title?: string | null; spec?: string | null; claimed?: string | null }) {
+  if (!grade && claimed)
+    return (
+      <span title="Кандидат проходил тест на этот грейд, но не подтвердил его">
+        <Badge tone="warn">
+          {spec ? `${spec} · ` : ''}заявлен {claimed} · не подтверждён
+        </Badge>
+      </span>
+    )
   if (!grade) return <Badge>Грейд не подтверждён</Badge>
   return (
     <span className={clsx('inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap', GRADE_TONE[grade])}>

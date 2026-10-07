@@ -123,7 +123,7 @@ SKILLS: list[Skill] = [
     # qa
     _S("test_design", "Тест-дизайн", "qa", ("тест-кейсы", "чек-листы", "test cases", "ручное тестирование"),
        {"autotests": 0.4}),
-    _S("autotests", "Автотесты", "qa", ("pytest", "selenium", "playwright", "cypress", "junit", "автоматизация"),
+    _S("autotests", "Автотесты", "qa", ("pytest", "selenium", "playwright", "cypress", "junit", "автоматизация тестирования"),
        {"test_design": 0.4}),
     _S("api_testing", "Тестирование API", "qa", ("postman", "api testing"), {"rest": 0.5, "autotests": 0.4}),
     _S("load_testing", "Нагрузочное тестирование", "qa", ("jmeter", "locust", "k6")),
@@ -140,7 +140,7 @@ SKILLS: list[Skill] = [
     _S("algorithms", "Алгоритмы и структуры данных", "general",
        ("алгоритмы", "структуры данных", "leetcode", "спортивное программирование", "олимпиадное программирование"),
        {"cpp": 0.3}),
-    _S("oop", "ООП и паттерны", "general", ("ооп", "solid", "паттерны", "design patterns")),
+    _S("oop", "ООП и паттерны", "general", ("ооп", "принципы solid", "паттерны", "design patterns")),
     _S("security", "Информационная безопасность", "general",
        ("кибербезопасность", "infosec", "owasp", "pentest", "ctf")),
 ]

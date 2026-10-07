@@ -75,6 +75,9 @@ class CandidateProfile(TimestampMixin, Base):
 
     # category assigned by the test (the only thing employers search by)
     grade: Mapped[str | None] = mapped_column(String(20), index=True)
+    # the grade of the last attempt that was not confirmed while no grade is confirmed yet: such candidates are
+    # shown to employers below the confirmed ones, marked "не подтверждён" (they do not drop out of circulation)
+    claimed_grade: Mapped[str | None] = mapped_column(String(20))
     theta: Mapped[float | None] = mapped_column(Float)
     theta_se: Mapped[float | None] = mapped_column(Float)
     skill_theta: Mapped[dict] = mapped_column(JSON, default=dict)  # per-skill ability estimates from the test
@@ -211,6 +214,23 @@ class GradeHistory(Base):
     reason: Mapped[str] = mapped_column(String(200), default="")
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
 
+
+
+class PilotSurvey(Base):
+    """Optional questionnaire after a test: the pilot compares the test result with experience, self-assessment and
+    a team lead's opinion (validation/pilot.py). Item complaints live in AssessmentItem.signals["report"]."""
+
+    __tablename__ = "pilot_surveys"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    session_id: Mapped[int] = mapped_column(ForeignKey("assessment_sessions.id", ondelete="CASCADE"), unique=True)
+    candidate_id: Mapped[int] = mapped_column(ForeignKey("candidates.id", ondelete="CASCADE"), index=True)
+    experience_years: Mapped[float | None] = mapped_column(Float)
+    position: Mapped[str] = mapped_column(String(120), default="")
+    self_grade: Mapped[str | None] = mapped_column(String(20))
+    lead_grade: Mapped[str | None] = mapped_column(String(20))
+    comment: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
 
 # ----------------------------------------------------------------------------------------------- employer
 

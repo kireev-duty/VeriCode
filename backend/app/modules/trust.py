@@ -45,12 +45,19 @@ def domain_match(company: Company) -> bool:
 
 def market_anomaly(db: Session, company: Company) -> bool:
     """A salary far above the market median of the same category is a classic lure of fake vacancies."""
-    own = db.scalars(select(Vacancy).where(Vacancy.company_id == company.id)).all()
-    for v in own:
-        peers = db.scalars(select(Vacancy.salary_to).where(Vacancy.specialization == v.specialization,
-                                                           Vacancy.grade == v.grade,
-                                                           Vacancy.company_id != company.id)).all()
-        if len(peers) >= 3 and v.salary_to > 2.5 * statistics.median(peers):
+    own = db.execute(select(Vacancy.specialization, Vacancy.grade, Vacancy.salary_to)
+                     .where(Vacancy.company_id == company.id)).all()
+    if not own:
+        return False
+    cats = {(spec, grade) for spec, grade, _ in own}
+    peers: dict[tuple, list[int]] = {}
+    for spec, grade, salary in db.execute(select(Vacancy.specialization, Vacancy.grade, Vacancy.salary_to).where(
+            Vacancy.company_id != company.id, Vacancy.specialization.in_({c[0] for c in cats}))):
+        if (spec, grade) in cats and salary:
+            peers.setdefault((spec, grade), []).append(salary)
+    for spec, grade, salary in own:
+        market = peers.get((spec, grade), [])
+        if len(market) >= 3 and salary and salary > 2.5 * statistics.median(market):
             return True
     return False
 

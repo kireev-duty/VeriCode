@@ -15,6 +15,7 @@ RUN uv sync --frozen --no-dev --no-install-project --python-preference only-syst
 COPY app ./app
 COPY alembic.ini ./
 COPY alembic ./alembic
+COPY certs ./certs
 COPY docker-entrypoint.sh ./
 RUN chmod +x docker-entrypoint.sh && useradd -m appuser && chown -R appuser /app
 USER appuser

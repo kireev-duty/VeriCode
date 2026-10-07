@@ -271,9 +271,28 @@ SD_SCENARIOS = [
     (3, "Повторная доставка сообщения о списании денег не должна приводить к двойному списанию.",
      "Идемпотентный обработчик с ключом идемпотентности", [
          "Exactly-once в настройках HTTP-клиента", "Увеличить число партиций", "Отключить ретраи у брокера"]),
-    (3, "Таблица событий растёт на 500 млн строк в месяц, запросы почти всегда за последние 7 дней.",
+    (3, "Таблица событий растёт на {n}00 млн строк в месяц, запросы почти всегда за последние 7 дней.",
      "Партиционирование по времени и удаление старых партиций", [
          "Добавить индекс на каждый столбец", "Вертикально масштабировать сервер БД", "Перейти на SQLite"]),
+    (2, "Пользователи загружают фото до {n}0 МБ; сервер приложений не должен проксировать файлы.",
+     "Загрузка напрямую в объектное хранилище по presigned URL", [
+         "Хранить файлы в BLOB-столбце основной БД", "Принимать файл в API и пересылать в хранилище",
+         "Сохранять файлы на локальный диск каждого инстанса"]),
+    (2, "Поиск по {n} млн товаров с опечатками и ранжированием по релевантности.",
+     "Полнотекстовый поисковый движок (OpenSearch/Elasticsearch)", [
+         "LIKE '%запрос%' по таблице товаров", "Кэшировать все возможные запросы в Redis",
+         "Шардировать таблицу товаров по первой букве"]),
+    (2, "Публичный API нужно защитить от всплесков: не больше {n}0 запросов в секунду на клиента.",
+     "Rate limiting на шлюзе (token bucket по ключу клиента)", [
+         "Увеличить число инстансов до бесконечности", "Отключить keep-alive", "Кэшировать ответы POST-запросов"]),
+    (3, "Отчёты аналитиков по {n}0 млрд строк тормозят основную OLTP-базу.",
+     "Вынести аналитику в колоночное хранилище (ClickHouse) с репликацией через CDC", [
+         "Добавить больше индексов в OLTP-базу", "Запускать отчёты ночью на той же базе",
+         "Увеличить пул соединений"]),
+    (3, "Сервис в {n} регионах; нужна запись с минимальной задержкой и допустима согласованность в конечном счёте.",
+     "Multi-leader репликация с разрешением конфликтов (CRDT/last-write-wins)", [
+         "Одна мастер-база в одном регионе с синхронной записью", "Двухфазный коммит между регионами",
+         "Шардирование без репликации"]),
 ]
 
 
@@ -281,6 +300,7 @@ SD_SCENARIOS = [
         {2: Tier(0.2, 1.3, 120), 3: Tier(1.1, 1.5, 150)})
 def sd_choice(rng: random.Random, tier: int) -> Instance:
     _, text, correct, wrong = rng.choice([s for s in SD_SCENARIOS if s[0] == tier])
+    text = text.format(n=rng.randint(2, 9))
     return choice_instance(rng, f"{text}\n\nКакое решение подходит лучше всего?", correct, wrong)
 
 
@@ -290,10 +310,10 @@ def sd_choice(rng: random.Random, tier: int) -> Instance:
 @family("git_history", "История коммитов git", "git", "просчитай результат",
         {1: Tier(-0.8, 1.3, 120), 2: Tier(0.4, 1.5, 150)})
 def git_history(rng: random.Random, tier: int) -> Instance:
-    base = rng.randint(2, 5)
-    feat = rng.randint(1, 4)
+    base = rng.randint(2, 9)
+    feat = rng.randint(1, 5)
     main_after = rng.choice([0, rng.randint(1, 3)]) if tier == 2 else 0
-    branch = rng.choice(["feature", "fix-login", "api-v2", "hotfix"])
+    branch = rng.choice(["feature", "fix-login", "api-v2", "hotfix", "search", "billing"])
     cmds = [f"# в ветке main {base} коммитов", f"git switch -c {branch}"]
     cmds += [f"git commit -am 'step {i + 1}'" for i in range(feat)]
     cmds.append("git switch main")
@@ -310,3 +330,117 @@ def git_history(rng: random.Random, tier: int) -> Instance:
     return Instance(prompt="Сколько коммитов покажет `git log --oneline` в ветке main после команд?", kind="number",
                     answer=total, code="\n".join(cmds), lang="bash",
                     explanation="Если main не ушла вперёд, merge — fast-forward без merge-коммита." + note)
+
+
+# ------------------------------------------------------------------------------------------------ bank extension
+
+
+@family("sql_window", "Подзапросы и оконные функции", "sql", "выполни запрос в уме",
+        {1: Tier(-0.7, 1.4, 150), 2: Tier(0.5, 1.6, 210), 3: Tier(1.3, 1.7, 240)})
+def sql_window(rng: random.Random, tier: int) -> Instance:
+    ddl, rows = _sql_fixture(rng)
+    dept = rng.choice([r[2] for r in rows])
+    if tier == 1:
+        query = rng.choice([
+            f"SELECT MAX(salary) - MIN(salary) FROM emp WHERE dept = '{dept}';",
+            f"SELECT COUNT(DISTINCT dept) FROM emp WHERE salary >= {rng.choice(range(100, 200, 20)) * 1000};",
+            "SELECT COUNT(*) FROM emp WHERE manager_id IS NULL;",
+        ])
+    elif tier == 2:
+        query = rng.choice([
+            "SELECT COUNT(*) FROM emp e\nWHERE salary > (SELECT AVG(salary) FROM emp WHERE dept = e.dept);",
+            "SELECT COUNT(*) FROM emp e\nWHERE salary = (SELECT MAX(salary) FROM emp WHERE dept = e.dept);",
+            "SELECT COUNT(*) FROM emp e\nWHERE EXISTS (SELECT 1 FROM emp m WHERE m.dept = e.dept AND m.salary > "
+            "e.salary * 1.5);",
+        ])
+    else:
+        fn = rng.choice(["RANK()", "DENSE_RANK()", "ROW_NUMBER()"])
+        k = rng.randint(1, 2)
+        query = (f"SELECT COUNT(*) FROM (\n  SELECT name, {fn} OVER (PARTITION BY dept ORDER BY salary DESC) AS r\n"
+                 f"  FROM emp\n) t WHERE r <= {k};")
+    return Instance(prompt="Какое число вернёт запрос?", kind="number", answer=_sql_eval(ddl, query)[0][0],
+                    code=f"{ddl}\n\n{query}", lang="sql",
+                    explanation="Ответ вычислен выполнением запроса в SQLite. RANK оставляет разрывы после ничьих, "
+                                "DENSE_RANK — нет, ROW_NUMBER нумерует подряд.")
+
+
+@family("http_cache", "HTTP-кэширование", "http", "посчитай",
+        {1: Tier(-0.5, 1.4, 150), 2: Tier(0.5, 1.6, 180), 3: Tier(1.3, 1.7, 210)})
+def http_cache(rng: random.Random, tier: int) -> Instance:
+    times = sorted(rng.sample(range(1, 600), rng.randint(5, 8)))
+    times = [0] + times
+    ttl = rng.choice([30, 60, 90, 120, 300])
+    if tier == 1:
+        header = rng.choice([f"max-age={ttl}", "no-store"])
+        net, stored = 0, None
+        for t in times:
+            if header == "no-store" or stored is None or t - stored >= ttl:
+                net += 1
+                stored = t
+        return Instance(prompt=f"Ответ сервера содержит `Cache-Control: {header}`. Страница запрашивает ресурс в "
+                               f"моменты (с): {', '.join(map(str, times))}. Сколько запросов уйдёт в сеть? "
+                               "Свежесть отсчитывается от момента получения ответа.", kind="number", answer=net,
+                        explanation="Пока ответ свежий (возраст < max-age), браузер берёт его из кэша без сети; "
+                                    "no-store запрещает хранить ответ.")
+    if tier == 2:
+        change = rng.choice(times[2:])
+        n304, stored = 0, None
+        version_at_store = None
+        for t in times:
+            version = int(t >= change)
+            if stored is not None and t - stored < ttl:
+                continue
+            if stored is not None and version_at_store == version:
+                n304 += 1
+            stored, version_at_store = t, version
+        return Instance(prompt=f"Ответ: `Cache-Control: max-age={ttl}` и `ETag`. Устаревший ответ браузер "
+                               "перепроверяет запросом с If-None-Match. Ресурс на сервере изменился в момент "
+                               f"{change} с. Запросы в моменты (с): {', '.join(map(str, times))}. Сколько ответов "
+                               "304 Not Modified получит браузер?", kind="number", answer=n304,
+                        explanation="304 приходит, если ETag не изменился; ответ снова становится свежим на max-age.")
+    users = rng.sample(["A", "B", "C"], rng.randint(2, 3))
+    reqs = sorted((t, rng.choice(users)) for t in times)
+    s_ttl = rng.choice([60, 120, 300, 600])
+    origin, cdn, browser = 0, None, {}
+    for t, u in reqs:
+        if u in browser and t - browser[u] < ttl:
+            continue
+        if cdn is None or t - cdn >= s_ttl:
+            origin += 1
+            cdn = t
+        browser[u] = t
+    shown = ", ".join(f"{t} с — {u}" for t, u in reqs)
+    return Instance(prompt=f"Ответ: `Cache-Control: public, max-age={ttl}, s-maxage={s_ttl}`. Между браузерами и "
+                           f"origin стоит общий CDN. Запросы пользователей: {shown}. Сколько запросов дойдёт до "
+                           "origin? Браузер отсчитывает max-age от момента получения ответа, CDN — s-maxage от момента "
+                           "своего запроса к origin.", kind="number", answer=origin,
+                    explanation="max-age управляет личным кэшем браузера, s-maxage — общими кэшами (CDN).")
+
+
+@family("sd_storage", "Кэш, кворумы и шардирование", "system_design", "посчитай",
+        {1: Tier(-0.6, 1.4, 150), 2: Tier(0.4, 1.5, 180), 3: Tier(1.2, 1.6, 210)})
+def sd_storage(rng: random.Random, tier: int) -> Instance:
+    if tier == 1:
+        rps, hit = rng.choice(range(2000, 30001, 500)), rng.choice([50, 60, 70, 75, 80, 85, 90, 95, 98, 99])
+        return Instance(prompt=f"Сервис получает {rps} запросов чтения в секунду, перед базой стоит кэш с долей "
+                               f"попаданий {hit}%. Сколько запросов в секунду дойдёт до базы?", kind="number",
+                        answer=round(rps * (100 - hit) / 100))
+    if tier == 2:
+        n = rng.choice([3, 5, 7])
+        w, r = rng.randint(1, n), rng.randint(1, n)
+        if rng.random() < 0.5:
+            return Instance(prompt=f"Хранилище с репликацией: N = {n} реплик, запись подтверждается при W = {w} "
+                                   f"ответах, чтение — при R = {r}. Сколько реплик может отказать, чтобы запись "
+                                   "оставалась доступной?", kind="number", answer=n - w)
+        return choice_instance(rng, f"Хранилище: N = {n}, W = {w}, R = {r}. Гарантирует ли кворум, что чтение "
+                                    "увидит последнюю подтверждённую запись?",
+                               "Да" if r + w > n else "Нет", ["Да", "Нет", "Только при R = N", "Только при W = 1"],
+                               explanation="Чтение и запись пересекаются хотя бы в одной реплике, если R + W > N.")
+    ids = sorted(rng.sample(range(1, 100), rng.randint(8, 12)))
+    a = rng.randint(2, 5)
+    b = a + rng.choice([1, 2])
+    moved = sum(1 for i in ids if i % a != i % b)
+    return Instance(prompt=f"Ключи шардируются по формуле `shard = id % N`. Число шардов увеличили с {a} до {b}. "
+                           f"Сколько из ключей {', '.join(map(str, ids))} переедет на другой шард?", kind="number",
+                    answer=moved, explanation="При модульном шардировании меняется шард у большинства ключей — "
+                                              "поэтому применяют консистентное хеширование.")

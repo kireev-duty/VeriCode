@@ -5,7 +5,7 @@ export function rub(n: number | null | undefined): string {
 
 export function salaryRange(from: number, to: number): string {
   const f = new Intl.NumberFormat('ru-RU')
-  return `${f.format(from)} – ${f.format(to)} ₽`
+  return `${f.format(from)} – ${f.format(to)} ₽ до НДФЛ`
 }
 
 export function date(s: string | null | undefined): string {

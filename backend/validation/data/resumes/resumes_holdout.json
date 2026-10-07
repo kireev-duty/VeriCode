@@ -1,0 +1,237 @@
+[
+ {
+  "file": "holdout_01_plain.pdf",
+  "layout": "plain",
+  "full_name": "Иванова Светлана Петровна",
+  "email": "s.ivanova@example.ru",
+  "phone": "+79123456789",
+  "telegram": "",
+  "city": "Пермь",
+  "specialization": "backend",
+  "skills": [
+   "python",
+   "fastapi",
+   "postgresql",
+   "docker",
+   "rabbitmq"
+  ],
+  "jobs": [
+   [
+    "Backend-разработчик",
+    "ООО «ПромСофт»",
+    [
+     2021,
+     3,
+     null,
+     0
+    ]
+   ],
+   [
+    "Программист 1С",
+    "Завод «Уралмаш-Сервис»",
+    [
+     2019,
+     1,
+     2021,
+     2
+    ]
+   ]
+  ]
+ },
+ {
+  "file": "holdout_02_sidebar.pdf",
+  "layout": "sidebar",
+  "full_name": "Nikolay Belov",
+  "email": "n.belov@example.com",
+  "phone": "+79857650011",
+  "telegram": "@nikolay_be",
+  "city": "Москва",
+  "specialization": "backend",
+  "skills": [
+   "java",
+   "kotlin",
+   "spring",
+   "kafka",
+   "postgresql",
+   "kubernetes",
+   "system_design"
+  ],
+  "jobs": [
+   [
+    "Senior Backend Engineer",
+    "Payments Cloud",
+    [
+     2020,
+     3,
+     null,
+     0
+    ]
+   ],
+   [
+    "Software Engineer",
+    "Telecom Systems",
+    [
+     2016,
+     8,
+     2020,
+     2
+    ]
+   ]
+  ]
+ },
+ {
+  "file": "holdout_03_hh.pdf",
+  "layout": "hh",
+  "full_name": "Григорий Осипов",
+  "email": "osipov.g@example.org",
+  "phone": "+79031002030",
+  "telegram": "@gosipov",
+  "city": "Нижний Новгород",
+  "specialization": "devops",
+  "skills": [
+   "linux",
+   "bash",
+   "docker",
+   "kubernetes",
+   "terraform",
+   "monitoring",
+   "ci_cd"
+  ],
+  "jobs": [
+   [
+    "DevOps-инженер",
+    "Интернет-провайдер «Волга-Нет»",
+    [
+     2020,
+     7,
+     null,
+     0
+    ]
+   ],
+   [
+    "Системный администратор",
+    "Колледж информатики",
+    [
+     2019,
+     1,
+     2020,
+     6
+    ]
+   ]
+  ]
+ },
+ {
+  "file": "holdout_04_prose.pdf",
+  "layout": "prose",
+  "full_name": "Ксения Романова",
+  "email": "romanova.k@example.com",
+  "phone": "+79261112233",
+  "telegram": "@kromanova",
+  "city": "Москва",
+  "specialization": "frontend",
+  "skills": [
+   "react",
+   "typescript"
+  ],
+  "jobs": [
+   [
+    "Frontend-разработчик",
+    "EdTech «Учи.Код»",
+    [
+     2022,
+     1,
+     null,
+     0
+    ]
+   ],
+   [
+    "Junior frontend",
+    "Агентство «Пиксели»",
+    [
+     2020,
+     1,
+     2021,
+     12
+    ]
+   ]
+  ]
+ },
+ {
+  "file": "holdout_05_plain.pdf",
+  "layout": "plain",
+  "full_name": "Олег Тарасов",
+  "email": "tarasov.oleg@example.net",
+  "phone": "+79212223344",
+  "telegram": "@otarasov",
+  "city": "Санкт-Петербург",
+  "specialization": "data",
+  "skills": [
+   "python",
+   "sql",
+   "clickhouse",
+   "pandas"
+  ],
+  "jobs": [
+   [
+    "Data Engineer",
+    "Сервис доставки «Быстро»",
+    [
+     2023,
+     7,
+     null,
+     0
+    ]
+   ],
+   [
+    "Аналитик данных",
+    "Сеть аптек «Здоровье»",
+    [
+     2021,
+     2,
+     2023,
+     6
+    ]
+   ]
+  ]
+ },
+ {
+  "file": "holdout_06_english.pdf",
+  "layout": "english",
+  "full_name": "Daria Kuznetsova",
+  "email": "d.kuznetsova@example.io",
+  "phone": "+79990001122",
+  "telegram": "@dkuz_qa",
+  "city": "Казань",
+  "specialization": "qa",
+  "skills": [
+   "autotests",
+   "typescript",
+   "api_testing",
+   "rest",
+   "ci_cd",
+   "test_design"
+  ],
+  "jobs": [
+   [
+    "QA Automation Engineer",
+    "Marketplace Tech",
+    [
+     2021,
+     1,
+     null,
+     0
+    ]
+   ],
+   [
+    "QA Engineer",
+    "Mobile Games",
+    [
+     2019,
+     6,
+     2020,
+     12
+    ]
+   ]
+  ]
+ }
+]

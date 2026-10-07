@@ -3,7 +3,7 @@
 import random
 from datetime import timedelta
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -53,6 +53,20 @@ def ensure_item_stats(db: Session) -> None:
 def load_bank(db: Session) -> list[cat.BankItem]:
     overrides = {s.item_key: {"a": s.a, "b": s.b, "status": s.status} for s in db.scalars(select(ItemFamilyStat))}
     return cat.build_bank(overrides)
+
+
+def exposure_rates(db: Session, specialization: str) -> dict[str, float]:
+    """Share of test sessions of the specialization that showed each slot (a key appears at most once per session).
+    Empty during warm-up: the control needs enough sessions to tell an overused slot from noise."""
+    sessions = db.scalar(select(func.count()).select_from(AssessmentSession)
+                         .where(AssessmentSession.specialization == specialization)) or 0
+    if sessions < cat.EXPOSURE_WARMUP:
+        return {}
+    rows = db.execute(select(AssessmentItem.item_key, func.count())
+                      .join(AssessmentSession, AssessmentSession.id == AssessmentItem.session_id)
+                      .where(AssessmentSession.specialization == specialization)
+                      .group_by(AssessmentItem.item_key))
+    return {key: n / sessions for key, n in rows}
 
 
 def _as_aware(dt):
@@ -145,7 +159,8 @@ def _add_item(db: Session, session: AssessmentSession, bank: list[cat.BankItem])
     responses = _responses(session, bank_by_key)
     rng = random.Random(session.seed * 1000 + len(session.items))
     nxt = cat.select_next(bank, session.blueprint, responses, cat.selection_theta(responses, session.target_grade),
-                          rng, exclude_keys={i.item_key for i in session.items})
+                          rng, exclude_keys={i.item_key for i in session.items},
+                          exposure=exposure_rates(db, session.specialization))
     if nxt is None:
         return None
     item_seed = random.Random(session.seed + 7919 * (len(session.items) + 1)).randrange(1 << 30)
@@ -200,7 +215,8 @@ def start_session(db: Session, cand: CandidateProfile, target_grade: str, vacanc
     session = AssessmentSession(candidate_id=cand.id, specialization=cand.specialization, target_grade=target_grade,
                                 blueprint=build_blueprint(db, cand.specialization, stack, vacancy_id),
                                 vacancy_id=vacancy_id, seed=random.SystemRandom().randrange(1 << 30),
-                                prior_mean=0.0, theta=cat.start_theta(target_grade))
+                                prior_mean=0.0, theta=cat.start_theta(target_grade),
+                                flags={"express": True} if cand.user.is_demo else {})
     db.add(session)
     db.flush()
     _add_item(db, session, load_bank(db))
@@ -233,7 +249,7 @@ def answer(db: Session, session: AssessmentSession, item_id: int, response, sign
     theta, se = cat.current_estimate(responses)
     session.theta, session.se = round(theta, 3), round(se, 3)
     nxt = None
-    if not cat.should_stop(responses, session.target_grade):
+    if not cat.should_stop(responses, session.target_grade, express=bool((session.flags or {}).get("express"))):
         nxt = _add_item(db, session, bank)
     if nxt is None:
         finish(db, session, responses)
@@ -253,6 +269,7 @@ def finish(db: Session, session: AssessmentSession, responses: list[cat.Response
     session.skill_theta = d.skill_theta
     items = session.items
     session.flags = {
+        **(session.flags or {}),
         "timeouts": sum(1 for i in items if (i.signals or {}).get("timed_out")),
         "paste_events": sum(int((i.signals or {}).get("paste", 0)) for i in items),
         "blur_events": sum(int((i.signals or {}).get("blur", 0)) for i in items),
@@ -271,9 +288,13 @@ def finish(db: Session, session: AssessmentSession, responses: list[cat.Response
         cand.theta, cand.theta_se = d.theta, d.se
         cand.skill_theta = {**(cand.skill_theta or {}), **d.skill_theta}
         cand.grade_confirmed_at = now
+        cand.claimed_grade = None
         reason = {"confirmed": "Грейд подтверждён тестом",
                   "upgrade_available": "Грейд подтверждён с запасом: доступен тест на грейд выше"}[d.outcome]
     else:
+        if previous is None:  # nothing confirmed yet: keep the claim and the measured ability for the tail
+            cand.claimed_grade = session.target_grade
+            cand.theta, cand.theta_se = d.theta, d.se
         reason = "Заявленный грейд не подтверждён" + (f", текущий грейд {previous} сохранён" if previous else "")
     db.add(GradeHistory(candidate_id=cand.id, specialization=session.specialization, grade=cand.grade,
                         previous_grade=previous, session_id=session.id, reason=reason))

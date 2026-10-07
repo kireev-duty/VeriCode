@@ -1,6 +1,6 @@
 """Shortlists for employers: category-first search, ranking with explanations, anonymised cards, contact reveal."""
 
-from sqlalchemy import or_, select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.catalog import GRADE_BY_ID, GRADE_ORDER, SKILL_BY_ID, SPEC_BY_ID
@@ -14,7 +14,7 @@ def public_code(c: CandidateProfile) -> str:
 
 
 def candidate_view(c: CandidateProfile) -> CandidateView:
-    fsp, reasons = fsp_score(c.achievements, (c.fsp_profile or {}).get("rank", ""), c.specialization)
+    fsp, reasons = fsp_score(c.achievements, (c.fsp_profile or {}).get("rank", ""))
     last = max([d for d in (c.grade_confirmed_at, c.last_task_at) if d is not None], default=None)
     text = " ".join([c.headline or "", c.about or ""] + [e.get("summary", "") + " " + e.get("position", "")
                                                          for e in (c.experience or []) if isinstance(e, dict)])
@@ -23,7 +23,7 @@ def candidate_view(c: CandidateProfile) -> CandidateView:
         declared_skills=[s["id"] for s in (c.skills or []) if isinstance(s, dict)],
         experience_years=c.experience_years or 0, work_formats=c.work_formats or [], city=c.city or "",
         relocation=bool(c.relocation), salary_expectation=c.salary_expectation, fsp=fsp, fsp_reasons=reasons,
-        last_activity=last, text=text,
+        last_activity=last, text=text, claimed_grade=None if c.grade else c.claimed_grade,
     )
 
 
@@ -35,11 +35,32 @@ def need_spec(n: HiringNeed | Vacancy) -> NeedSpec:
                     require_fsp=bool(getattr(n, "require_fsp", False)))
 
 
+def effective_grade(c: CandidateProfile) -> str | None:
+    """The confirmed grade, or the claimed one for a candidate whose grade is not confirmed yet."""
+    return c.grade or c.claimed_grade
+
+
+def in_bank(c: CandidateProfile) -> bool:
+    """Visible to employers: took the test (confirmed or not), consented to publication, not hidden."""
+    return effective_grade(c) is not None and bool(c.visible_to_employers) and c.consent_publication_at is not None
+
+
+def grade_in(grades: list[str]):
+    """SQL filter by the effective grade (confirmed, else claimed)."""
+    return or_(CandidateProfile.grade.in_(grades),
+               and_(CandidateProfile.grade.is_(None), CandidateProfile.claimed_grade.in_(grades)))
+
+
 def searchable_query():
-    """Only candidates who passed the test, gave consent to publication and are visible."""
+    """Candidates who took the test, gave consent to publication and are visible.
+
+    A grade that is not confirmed does not hide the candidate (per the organisers' Q&A they must not drop out of
+    circulation): such candidates are listed after all confirmed ones and marked.
+    """
     return (select(CandidateProfile)
             .options(selectinload(CandidateProfile.achievements))
-            .where(CandidateProfile.grade.is_not(None), CandidateProfile.visible_to_employers.is_(True),
+            .where(or_(CandidateProfile.grade.is_not(None), CandidateProfile.claimed_grade.is_not(None)),
+                   CandidateProfile.visible_to_employers.is_(True),
                    CandidateProfile.consent_publication_at.is_not(None)))
 
 
@@ -47,23 +68,27 @@ def categories_overview(db: Session) -> list[dict]:
     rows = db.scalars(searchable_query()).all()
     counts: dict[tuple[str, str], dict] = {}
     for c in rows:
-        key = (c.specialization, c.grade)
-        d = counts.setdefault(key, {"total": 0, "fsp": 0})
-        d["total"] += 1
-        d["fsp"] += 1 if c.achievements else 0
+        key = (c.specialization, effective_grade(c))
+        d = counts.setdefault(key, {"total": 0, "fsp": 0, "unconfirmed": 0})
+        if c.grade:
+            d["total"] += 1
+            d["fsp"] += 1 if c.achievements else 0
+        else:
+            d["unconfirmed"] += 1
     out = []
     for spec_id, spec in SPEC_BY_ID.items():
         for g in GRADE_ORDER:
-            d = counts.get((spec_id, g), {"total": 0, "fsp": 0})
+            d = counts.get((spec_id, g), {"total": 0, "fsp": 0, "unconfirmed": 0})
             out.append({"specialization": spec_id, "specialization_title": spec.short, "grade": g,
-                        "grade_title": GRADE_BY_ID[g].title, "count": d["total"], "with_fsp": d["fsp"]})
+                        "grade_title": GRADE_BY_ID[g].title, "count": d["total"], "with_fsp": d["fsp"],
+                        "unconfirmed": d["unconfirmed"]})
     return out
 
 
 def apply_filters(views: list[tuple[CandidateProfile, CandidateView]], f: dict) -> list:
     out = []
     for c, v in views:
-        if f.get("grades") and v.grade not in f["grades"]:
+        if f.get("grades") and (v.grade or v.claimed_grade) not in f["grades"]:
             continue
         if f.get("skills") and not set(f["skills"]) <= (set(v.declared_skills) | set(v.skill_theta)):
             continue
@@ -93,7 +118,7 @@ def shortlist(db: Session, company: Company, need: HiringNeed, filters: dict | N
     gi = GRADE_ORDER.index(need.grade)
     grades = [g for g in GRADE_ORDER if abs(GRADE_ORDER.index(g) - gi) <= 1]
     rows = db.scalars(searchable_query().where(CandidateProfile.specialization == need.specialization,
-                                               CandidateProfile.grade.in_(grades))).all()
+                                               grade_in(grades))).all()
     views = [(c, candidate_view(c)) for c in rows if c.id not in (need.hidden or [])]
     if need.require_fsp:
         views = [(c, v) for c, v in views if c.achievements]
@@ -106,7 +131,8 @@ def shortlist(db: Session, company: Company, need: HiringNeed, filters: dict | N
             continue
         s = score(v, spec, company.ranking_weights or {})
         scored.append((c, v, s))
-    scored.sort(key=lambda x: (x[0].id not in pinned_ids, -x[2]["score"]))
+    # pinned first, then all confirmed grades, then the unconfirmed tail
+    scored.sort(key=lambda x: (x[0].id not in pinned_ids, x[0].grade is None, -x[2]["score"]))
     invited = invitation_status_map(db, company.id, [c.id for c, _, _ in scored])
 
     categories = []
@@ -114,6 +140,7 @@ def shortlist(db: Session, company: Company, need: HiringNeed, filters: dict | N
         in_cat = [x for x in scored if x[1].grade == g]
         categories.append({"specialization": need.specialization, "grade": g, "grade_title": GRADE_BY_ID[g].title,
                            "is_target": g == need.grade, "count": len(in_cat),
+                           "unconfirmed": sum(1 for x in scored if x[1].claimed_grade == g),
                            "avg_score": round(sum(x[2]["score"] for x in in_cat) / len(in_cat), 3) if in_cat else 0})
     return {
         "need_id": need.id,
@@ -128,9 +155,9 @@ def shortlist(db: Session, company: Company, need: HiringNeed, filters: dict | N
 def browse_category(db: Session, specialization: str, grade: str, filters: dict | None = None,
                     limit: int = 50) -> list[dict]:
     rows = db.scalars(searchable_query().where(CandidateProfile.specialization == specialization,
-                                               CandidateProfile.grade == grade)).all()
+                                               grade_in([grade]))).all()
     views = apply_filters([(c, candidate_view(c)) for c in rows], filters or {})
-    ranked = sorted(views, key=lambda x: -profile_strength(x[1]))
+    ranked = sorted(views, key=lambda x: (x[0].grade is None, -profile_strength(x[1])))
     return [card(c, v, None, strength=profile_strength(v)) for c, v in ranked[:limit]]
 
 
@@ -144,7 +171,7 @@ def search_bank(db: Session, q: str = "", filters: dict | None = None, limit: in
         like = f"%{q.lower()}%"
         query = query.where(or_(CandidateProfile.headline.ilike(like), CandidateProfile.about.ilike(like)))
     views = apply_filters([(c, candidate_view(c)) for c in db.scalars(query).all()], f)
-    ranked = sorted(views, key=lambda x: -profile_strength(x[1]))
+    ranked = sorted(views, key=lambda x: (x[0].grade is None, -profile_strength(x[1])))
     return [card(c, v, None, strength=profile_strength(v)) for c, v in ranked[:limit]]
 
 
@@ -199,6 +226,9 @@ def card(c: CandidateProfile, v: CandidateView, s: dict | None, *, pinned: bool 
         "specialization_title": SPEC_BY_ID[c.specialization].short if c.specialization else None,
         "grade": c.grade,
         "grade_title": GRADE_BY_ID[c.grade].title if c.grade else None,
+        "grade_confirmed": c.grade is not None,
+        "claimed_grade": None if c.grade else c.claimed_grade,
+        "claimed_grade_title": GRADE_BY_ID[c.claimed_grade].title if not c.grade and c.claimed_grade else None,
         "theta": c.theta,
         "skill_theta": c.skill_theta or {},
         "grade_confirmed_at": c.grade_confirmed_at.isoformat() if c.grade_confirmed_at else None,

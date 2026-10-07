@@ -1,5 +1,6 @@
 """Python and asyncio families. Answers are obtained by executing the generated program."""
 
+import math
 import random
 
 from app.modules.assessment.families.base import IDENTS, NAMES, Instance, Tier, family, run_python
@@ -48,16 +49,17 @@ def py_mutability(rng: random.Random, tier: int) -> Instance:
         op = rng.choice([f"{b} += [{x}]", f"{b} = {b} + [{x}]"])
         code = f"{a} = {vals}\n{b} = {a}\n{op}\nprint(len({a}), len({b}))"
     else:
-        fn = rng.choice(["add", "push", "track"])
-        calls = rng.randint(2, 4)
+        fn = rng.choice(["add", "push", "track", "collect", "remember"])
+        calls = rng.randint(2, 5)
         if rng.random() < 0.5:
             code = (f"def {fn}(x, acc=[]):\n    acc.append(x)\n    return acc\n\n"
                     + "".join(f"{fn}({rng.randint(1, 9)})\n" for _ in range(calls - 1))
                     + f"print({fn}({x}))")
         else:
-            n = rng.randint(3, 4)
-            k = rng.randint(2, 5)
-            code = (f"fs = [lambda: i * {k} for i in range({n})]\n"
+            n, k, m = rng.randint(3, 5), rng.randint(2, 7), rng.randint(0, 3)
+            late = rng.random() < 0.5  # the classic late binding vs. the default-argument fix
+            lam = f"lambda i=i: i * {k} + {m}" if not late else f"lambda: i * {k} + {m}"
+            code = (f"fs = [{lam} for i in range({n})]\n"
                     f"print([f() for f in fs])")
     return Instance(prompt="Что выведет программа?", kind="text", answer=run_python(code), code=code,
                     lang="python")
@@ -104,9 +106,9 @@ def py_exceptions(rng: random.Random, tier: int) -> Instance:
 @family("py_iterators", "Генераторы и итераторы", "python", "предскажи вывод",
         {2: Tier(0.4, 1.5, 120), 3: Tier(1.3, 1.6, 150)})
 def py_iterators(rng: random.Random, tier: int) -> Instance:
-    n, k = rng.randint(3, 6), rng.randint(2, 4)
+    n, k = rng.randint(3, 12), rng.randint(2, 5)
     if tier == 2:
-        m = rng.randint(1, 3)
+        m = rng.randint(1, 4)
         code = rng.choice([
             f"g = (x * {k} for x in range({n}))\nprint(sum(g), sum(g))",
             f"g = (x + {m} for x in range({n}) if x % {k})\nfirst = list(g)\nprint(len(first), list(g))",
@@ -139,12 +141,17 @@ def py_classes(rng: random.Random, tier: int) -> Instance:
                 f"objs = [{cls}() for _ in range({n})]\nfor i, o in enumerate(objs):\n    o.add(i * {k})\n"
                 f"print({what})")
     else:
-        letters = rng.sample(["A", "B", "C", "D"], 4)
-        base, left, right, child = letters
+        # diamond: which sides delegate to super() and the order of bases vary -> 4! x 2 x 2 x 2 structures
+        base, left, right, child = rng.sample(["A", "B", "C", "D"], 4)
+
+        def body(name: str, delegates: bool) -> str:
+            return f"'{name}' + super().who()" if delegates else f"'{name}'"
+
+        bases = f"{left}, {right}" if rng.random() < 0.5 else f"{right}, {left}"
         code = (f"class {base}:\n    def who(self):\n        return '{base}'\n\n"
-                f"class {left}({base}):\n    def who(self):\n        return '{left}' + super().who()\n\n"
-                f"class {right}({base}):\n    def who(self):\n        return '{right}' + super().who()\n\n"
-                f"class {child}({left}, {right}):\n    pass\n\nprint({child}().who())")
+                f"class {left}({base}):\n    def who(self):\n        return {body(left, rng.random() < 0.7)}\n\n"
+                f"class {right}({base}):\n    def who(self):\n        return {body(right, rng.random() < 0.7)}\n\n"
+                f"class {child}({bases}):\n    pass\n\nprint({child}().who())")
     return Instance(prompt="Что выведет программа?", kind="text", answer=run_python(code), code=code,
                     lang="python")
 
@@ -182,3 +189,44 @@ def py_async(rng: random.Random, tier: int) -> Instance:
     return Instance(prompt="Сколько секунд (примерно) будет выполняться программа?", kind="number",
                     answer=total, code=code, lang="python",
                     explanation="create_task запускает задачу сразу, она идёт параллельно со следующим await.")
+
+
+def _fifo_slots(durations: list[int], slots: int) -> int:
+    """Finish time of jobs started in order whenever one of `slots` permits is free (asyncio.Semaphore is FIFO)."""
+    free = [0] * slots
+    for d in durations:
+        i = free.index(min(free))
+        free[i] += d
+    return max(free)
+
+
+@family("asyncio_limits", "Семафоры и таймауты asyncio", "asyncio", "посчитай",
+        {2: Tier(0.6, 1.6, 180), 3: Tier(1.3, 1.7, 210)})
+def asyncio_limits(rng: random.Random, tier: int) -> Instance:
+    k = rng.randint(2, 4)
+    if tier == 2:
+        n, d = rng.randint(5, 12), rng.randint(1, 4)
+        # a half-second offset keeps every finish time strictly before or after the timeout
+        timeout = rng.choice([None, None, d * rng.randint(1, 3) + 0.5, d - 0.5])
+        code = (f"import asyncio\n\nsem = asyncio.Semaphore({k})\n\nasync def job():\n    async with sem:\n"
+                f"        await asyncio.sleep({d})\n\nasync def main():\n")
+        if timeout is None:
+            code += f"    await asyncio.gather(*(job() for _ in range({n})))\n"
+            prompt, ans = "Сколько секунд (примерно) будет выполняться программа?", math.ceil(n / k) * d
+        else:
+            code += (f"    res = await asyncio.gather(*(asyncio.wait_for(job(), timeout={timeout}) for _ in "
+                     f"range({n})), return_exceptions=True)\n"
+                     "    print(sum(isinstance(r, TimeoutError) for r in res))\n")
+            # wait_for starts every wrapper at once: the timeout also counts time spent waiting for the semaphore
+            ok = sum(1 for i in range(n) if (i // k + 1) * d <= timeout)
+            prompt, ans = "Что выведет программа?", n - ok
+        return Instance(prompt=prompt, kind="number", answer=ans, code=code + "\nasyncio.run(main())",
+                        lang="python", explanation="Семафор пропускает не больше k корутин одновременно; таймаут "
+                                                   "wait_for включает и ожидание семафора.")
+    durations = [rng.randint(1, 6) for _ in range(rng.randint(5, 8))]
+    code = (f"import asyncio\n\nsem = asyncio.Semaphore({k})\n\nasync def job(s):\n    async with sem:\n"
+            "        await asyncio.sleep(s)\n\nasync def main():\n"
+            f"    await asyncio.gather(*(job(s) for s in {durations}))\n\nasyncio.run(main())")
+    return Instance(prompt="Сколько секунд (примерно) будет выполняться программа? Задачи захватывают семафор в "
+                           "порядке создания.", kind="number", answer=_fifo_slots(durations, k), code=code,
+                    lang="python", explanation="Каждая следующая задача занимает первый освободившийся слот.")

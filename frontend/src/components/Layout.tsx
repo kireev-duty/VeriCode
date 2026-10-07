@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import clsx from 'clsx'
-import { Bell, LogOut, Menu, X } from 'lucide-react'
+import { Bell, HelpCircle, LogOut, Menu, X } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router'
 import { api } from '../api/client'
@@ -62,7 +62,7 @@ function Bellmenu() {
       {open && (
         <>
           <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 z-40 mt-2 w-80 overflow-hidden rounded-2xl border border-line bg-white shadow-xl">
+          <div className="absolute right-0 z-40 mt-2 w-[min(20rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-line bg-white shadow-xl">
             <div className="border-b border-line px-4 py-3 text-sm font-semibold">Уведомления</div>
             <div className="max-h-96 overflow-y-auto">
               {!data?.items.length && <div className="px-4 py-6 text-center text-sm text-muted">Пока пусто</div>}
@@ -175,6 +175,9 @@ export function PublicShell({ children }: { children?: ReactNode }) {
             </NavLink>
           </nav>
           <div className="ml-auto flex items-center gap-2">
+            <Link to="/how" aria-label="Как это работает" className="rounded-xl p-2 text-muted hover:bg-brand-50 hover:text-ink md:hidden">
+              <HelpCircle className="size-5" />
+            </Link>
             {user ? (
               <Link to={user.role === 'employer' ? '/e' : '/c'} className="rounded-xl bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600">
                 Мой кабинет

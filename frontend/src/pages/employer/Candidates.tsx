@@ -9,7 +9,7 @@ import { Alert, Badge, Button, Card, CodeAvatar, Empty, GradeBadge, Input, PageH
 import { useCatalog } from '../../lib/catalog'
 import { ago, date, INVITATION_STATUS, salaryRange, skillLevel, thetaPercentile, years } from '../../lib/format'
 import { CategoryMap } from './Matching'
-import { CandidateRow, FiltersPanel, InviteModal } from './shared'
+import { CandidateList, CandidateRow, FiltersPanel, InviteModal } from './shared'
 
 const COMPONENT_TITLES: Record<string, string> = {
   skills: 'Стек',
@@ -50,7 +50,7 @@ export function EmployerCandidate() {
                 <h1 className="mt-1 text-2xl font-semibold">{c.contacts?.full_name || c.headline || 'Кандидат'}</h1>
                 {c.contacts?.full_name && <div className="text-muted">{c.headline}</div>}
                 <div className="mt-2 flex flex-wrap gap-2">
-                  <GradeBadge grade={c.grade} title={c.grade_title} spec={c.specialization_title} />
+                  <GradeBadge grade={c.grade} title={c.grade_title} spec={c.specialization_title} claimed={c.claimed_grade_title} />
                   {c.has_fsp && <Badge tone="brand"><Trophy className="size-3" /> ФСП{c.fsp_rank ? ` · разряд ${c.fsp_rank}` : ''}</Badge>}
                   {!c.has_fsp && <Badge>нет данных ФСП</Badge>}
                 </div>
@@ -251,6 +251,7 @@ export function EmployerSearch() {
   const { catalog } = useCatalog()
   const [q, setQ] = useState('')
   const [invite, setInvite] = useState<CandidateCard | null>(null)
+  const [showFilters, setShowFilters] = useState(false)
   const spec = params.get('spec')
   const grade = params.get('grade')
   const [filters, setFilters] = useState<Filters>({
@@ -283,7 +284,12 @@ export function EmployerSearch() {
       </Card>
       <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
         <div className="lg:sticky lg:top-24 lg:h-fit">
-          <FiltersPanel value={filters} onChange={setFilters} skills={skills} showSpecs />
+          <Button variant="secondary" className="mb-3 w-full lg:hidden" onClick={() => setShowFilters(!showFilters)} aria-expanded={showFilters}>
+            {showFilters ? 'Скрыть фильтры' : 'Фильтры'}
+          </Button>
+          <div className={clsx(!showFilters && 'hidden', 'lg:block')}>
+            <FiltersPanel value={filters} onChange={setFilters} skills={skills} showSpecs />
+          </div>
         </div>
         <div>
           <Input placeholder="Поиск по заголовку и описанию профиля…" value={q} onChange={(e) => setQ(e.target.value)} className="mb-4 h-11" />
@@ -293,11 +299,7 @@ export function EmployerSearch() {
           {data?.length === 0 ? (
             <Empty title="Никого не нашлось">Измените фильтры.</Empty>
           ) : (
-            <div className="space-y-3">
-              {data?.map((c) => (
-                <CandidateRow key={c.id} c={c} onInvite={setInvite} />
-              ))}
-            </div>
+            <CandidateList items={data ?? []} render={(c) => <CandidateRow c={c} onInvite={setInvite} />} />
           )}
         </div>
       </div>

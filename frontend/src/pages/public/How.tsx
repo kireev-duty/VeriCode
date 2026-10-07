@@ -175,7 +175,7 @@ export function How() {
                         <span className="font-mono text-muted">{Math.round(b.weight * 100)}%</span>
                       </div>
                       <ProgressBar value={b.weight / Math.max(...preview.data!.blueprint.map((x) => x.weight))} className="mt-1" />
-                      <div className="mt-0.5 text-[11px] text-muted">{b.families} семейств заданий</div>
+                      <div className="mt-0.5 text-xs text-muted">{b.families} семейств заданий</div>
                     </div>
                   ))}
                 </div>

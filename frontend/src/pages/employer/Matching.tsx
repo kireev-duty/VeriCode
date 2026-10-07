@@ -1,14 +1,14 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import clsx from 'clsx'
-import { ArrowRight, Pencil, Plus, Search, Sparkles, Users, Wand2, X } from 'lucide-react'
+import { ArrowRight, Check, CircleDashed, Pencil, Plus, Search, Sparkles, Users, Wand2, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { api } from '../../api/client'
 import { emptyFilters, type CandidateCard, type Filters, type GradeId, type Need, type Shortlist, type WorkFormat } from '../../api/types'
-import { Alert, Badge, Button, Card, ChipToggle, Empty, Field, Input, MultiChips, PageHeader, PageLoader, SectionTitle, Select, Textarea, Toggle } from '../../components/ui'
+import { Alert, Badge, Button, Card, ChipToggle, Empty, Field, Input, MultiChips, PageHeader, PageLoader, SectionTitle, Select, Spinner, Textarea, Toggle } from '../../components/ui'
 import { useCatalog } from '../../lib/catalog'
 import { ago, salaryRange } from '../../lib/format'
-import { CandidateRow, FiltersPanel, InviteModal } from './shared'
+import { CandidateList, CandidateRow, FiltersPanel, InviteModal } from './shared'
 
 interface CategoryCell {
   specialization: string
@@ -27,7 +27,12 @@ interface Analytics {
 export function CategoryMap({ onPick }: { onPick: (spec: string, grade: string) => void }) {
   const { catalog } = useCatalog()
   const { data } = useQuery({ queryKey: ['categories'], queryFn: () => api.get<CategoryCell[]>('/api/employer/categories') })
-  if (!data || !catalog) return null
+  if (!data || !catalog)
+    return (
+      <div className="flex h-24 items-center justify-center">
+        <Spinner />
+      </div>
+    )
   const max = Math.max(...data.map((d) => d.count), 1)
   return (
     <div className="overflow-x-auto">
@@ -55,7 +60,7 @@ export function CategoryMap({ onPick }: { onPick: (spec: string, grade: string) 
                       style={{ background: `rgb(64 47 255 / ${0.06 + v * 0.55})`, color: v > 0.55 ? 'white' : undefined }}
                     >
                       <div className="font-semibold">{cell?.count ?? 0}</div>
-                      <div className="text-[11px] opacity-80">ФСП: {cell?.with_fsp ?? 0}</div>
+                      <div className="text-xs opacity-80">ФСП: {cell?.with_fsp ?? 0}</div>
                     </button>
                   </td>
                 )
@@ -65,6 +70,62 @@ export function CategoryMap({ onPick }: { onPick: (spec: string, grade: string) 
         </tbody>
       </table>
     </div>
+  )
+}
+
+const STEPS_KEY = 'fsp-talent:employer-steps-hidden'
+
+function readHidden(): boolean {
+  try {
+    return localStorage.getItem(STEPS_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+/** First visit: what to do, in the order of the reverse mechanic. Hidden by the user or once everything is done. */
+function FirstSteps({ needs, sent }: { needs: Need[]; sent: number }) {
+  const { data: company } = useQuery({ queryKey: ['company'], queryFn: () => api.get<{ description: string; industry: string }>('/api/employer/company') })
+  const [hidden, setHidden] = useState(readHidden)
+  if (hidden || !company) return null
+  const steps = [
+    { done: !!(company.description && company.industry), title: 'Заполните профиль компании', hint: 'Описание и сфера видны кандидату в приглашении', to: '/e/company' },
+    { done: needs.length > 0, title: 'Опишите, кого ищете', hint: 'Обычным текстом — система разберёт стек, грейд и вилку', to: '/e/needs/new' },
+    { done: needs.length > 0, title: 'Посмотрите подборку', hint: 'Категории и кандидаты с объяснением, почему они подходят', to: needs[0] ? `/e/needs/${needs[0].id}` : '/e/needs/new' },
+    { done: sent > 0, title: 'Пригласите кандидата', hint: 'С описанием предложения и вилкой: контакты откроются после согласия', to: needs[0] ? `/e/needs/${needs[0].id}` : '/e/search' },
+  ]
+  if (steps.every((s) => s.done)) return null
+  const hide = () => {
+    try {
+      localStorage.setItem(STEPS_KEY, '1')
+    } catch {
+      /* storage may be unavailable: hide for this visit only */
+    }
+    setHidden(true)
+  }
+  return (
+    <Card className="mb-6 p-5">
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div>
+          <div className="mono-label text-brand-600">Первые шаги</div>
+          <div className="font-semibold">Как найти кандидата за 5 минут</div>
+        </div>
+        <button className="rounded-lg p-1 text-muted hover:bg-surface hover:text-ink" onClick={hide} aria-label="Скрыть подсказку">
+          <X className="size-4" />
+        </button>
+      </div>
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        {steps.map((s, i) => (
+          <Link key={s.title} to={s.to} className={clsx('rounded-xl border p-3 transition hover:border-brand-300', s.done ? 'border-ok/20 bg-ok-50' : 'border-line bg-white')}>
+            <div className="flex items-center gap-2 text-sm font-medium">
+              {s.done ? <Check className="size-4 text-ok" /> : <CircleDashed className="size-4 text-brand-400" />}
+              {i + 1}. {s.title}
+            </div>
+            <div className="mt-1 text-xs text-muted">{s.hint}</div>
+          </Link>
+        ))}
+      </div>
+    </Card>
   )
 }
 
@@ -86,6 +147,7 @@ export function EmployerHome() {
           </Link>
         }
       />
+      <FirstSteps needs={needs} sent={analytics?.funnel.sent ?? 0} />
       {analytics && (
         <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
           {[
@@ -101,7 +163,7 @@ export function EmployerHome() {
           ))}
         </div>
       )}
-      <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
+      <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr] [&>*]:min-w-0">
         <div>
           <SectionTitle label="Сохранённые подборки" title="Ваши потребности" />
           {needs.length === 0 ? (
@@ -158,6 +220,7 @@ interface Parsed {
   city: string
   salary_from: number | null
   salary_to: number | null
+  source: 'rules' | 'rules+llm'
 }
 
 type NeedForm = Omit<Need, 'id' | 'specialization_title' | 'grade_title' | 'pinned' | 'hidden' | 'created_at' | 'updated_at'>
@@ -267,7 +330,14 @@ export function NeedEditor() {
         <Button className="mt-3" variant={parsedOnce ? 'secondary' : 'primary'} icon={<Wand2 className="size-4" />} loading={parse.isPending} disabled={form.raw_text.trim().length < 10} onClick={() => parse.mutate()}>
           Разобрать текст
         </Button>
-        {parse.isSuccess && <Alert tone="ok" className="mt-3">Готово: проверьте поля ниже.</Alert>}
+        {parse.isSuccess && (
+          <Alert tone="ok" className="mt-3">
+            Готово: проверьте поля ниже.{' '}
+            <span className="text-muted">
+              {parse.data.source === 'rules+llm' ? 'Разобрано правилами и уточнено языковой моделью с проверкой по справочнику.' : 'Разобрано правилами и словарём навыков.'}
+            </span>
+          </Alert>
+        )}
       </Card>
 
       {parsedOnce && (
@@ -307,11 +377,11 @@ export function NeedEditor() {
               <SkillPicker value={form.nice_skills} onChange={(v) => set('nice_skills', v)} exclude={form.must_skills} />
             </Field>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Зарплата от, ₽/мес">
-                <Input type="number" required min={1} step={5000} value={form.salary_from || ''} onChange={(e) => set('salary_from', Number(e.target.value))} />
+              <Field label="Зарплата от, ₽/мес до НДФЛ">
+                <Input type="number" required min={0} step={1000} value={form.salary_from || ''} onChange={(e) => set('salary_from', Number(e.target.value))} />
               </Field>
-              <Field label="Зарплата до, ₽/мес">
-                <Input type="number" required min={1} step={5000} value={form.salary_to || ''} onChange={(e) => set('salary_to', Number(e.target.value))} />
+              <Field label="Зарплата до, ₽/мес до НДФЛ">
+                <Input type="number" required min={0} step={1000} value={form.salary_to || ''} onChange={(e) => set('salary_to', Number(e.target.value))} />
               </Field>
               <Field label="Формат">
                 <MultiChips
@@ -420,6 +490,7 @@ export function ShortlistPage() {
                 </div>
                 <div className={clsx('text-xs', active ? 'text-white/80' : 'text-muted')}>
                   {c.count} канд. · среднее соответствие {Math.round(c.avg_score * 100)}
+                  {!!c.unconfirmed && ` · ещё ${c.unconfirmed} не подтв.`}
                 </div>
               </button>
             )
@@ -444,11 +515,10 @@ export function ShortlistPage() {
               Ослабьте фильтры или измените потребность — например, добавьте соседний грейд или уберите редкий навык.
             </Empty>
           ) : (
-            <div className="space-y-3">
-              {data.candidates.map((c) => (
-                <CandidateRow key={c.id} c={c} needId={Number(id)} onInvite={setInvite} onPin={(x) => pin.mutate(x)} onHide={(x) => hide.mutate(x)} />
-              ))}
-            </div>
+            <CandidateList
+              items={data.candidates}
+              render={(c) => <CandidateRow c={c} needId={Number(id)} onInvite={setInvite} onPin={(x) => pin.mutate(x)} onHide={(x) => hide.mutate(x)} />}
+            />
           )}
         </div>
       </div>

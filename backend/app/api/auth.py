@@ -136,8 +136,14 @@ def login(data: LoginIn, db: DB):
 
 
 @router.post("/demo-login", response_model=TokenOut, summary="Вход под демо-аккаунтом (для проверки жюри)",
+             description="`candidate_new` каждый раз создаёт новый одноразовый аккаунт кандидата: каждый эксперт "
+                         "сам проходит опрос и экспресс-тест, не упираясь в ограничения чужих попыток.",
              responses={404: {"description": "Демо-данные не загружены (code: not_found)"}})
 def demo_login(role: Literal["candidate", "employer", "candidate_new"], db: DB):
+    if role == "candidate_new":
+        user = create_user(db, f"demo.new+{secrets.token_hex(4)}@fsp-talent.ru", secrets.token_urlsafe(16),
+                           "candidate", verified=True, demo=True)
+        return TokenOut(access_token=create_access_token(user.id, user.role), user=user_payload(user))
     email = {"candidate": "demo.candidate@fsp-talent.ru", "employer": "demo.employer@fsp-talent.ru",
              "candidate_new": "demo.new@fsp-talent.ru"}[role]
     user = db.scalar(select(User).where(User.email == email))

@@ -6,8 +6,13 @@ Design choices (see docs/testing.md):
 * The declared grade only chooses the *starting point* of item selection. Ability is estimated with the
   population prior N(0, 1) for everyone, so claiming a higher grade cannot inflate the result.
 * Content balancing: every next item comes from the skill that lags most behind the blueprint share.
-* Exposure control: "randomesque" - a random pick among the top-K most informative items, and at most
-  MAX_PER_FAMILY tiers of one family per session.
+* Exposure control, three layers:
+  - progressive randomesque: a random pick among the top-K most informative items, K shrinks from
+    RANDOMESQUE_K_START to RANDOMESQUE_K_END as the estimate sharpens (early items matter least for precision);
+  - online Sympson-Hetter: a slot shown in a share r of recent sessions above EXPOSURE_MAX is admitted with
+    probability EXPOSURE_MAX / r, so overused slots yield to near-equivalent ones (tuned in validation);
+  - at most MAX_PER_FAMILY tiers of one family per session.
+  Exposure of a *slot* is not exposure of *content*: every session draws its own instance of the family.
 * Stopping: posterior SD below SE_STOP, or the grade decision is already unambiguous, or MAX_ITEMS.
 """
 
@@ -22,8 +27,13 @@ from app.modules.assessment.irt import ItemParams, eap, fisher_info, prob_above
 
 MIN_ITEMS = 10
 MAX_ITEMS = 18
+EXPRESS_MIN_ITEMS = 6  # demo accounts for the jury: 3-5 minutes, lower precision (documented)
+EXPRESS_MAX_ITEMS = 10
 SE_STOP = 0.33
-RANDOMESQUE_K = 3
+RANDOMESQUE_K_START = 5
+RANDOMESQUE_K_END = 2
+EXPOSURE_MAX = 0.4  # target share of sessions of one specialization showing a slot (validation sweep)
+EXPOSURE_WARMUP = 50  # sessions observed before the exposure control starts to act
 MAX_PER_FAMILY = 2
 CARRY_MIN_NEW = 5  # a follow-up attempt adds at least this many new items
 CONFIRM_P = 0.6  # posterior probability required to confirm a grade (tuned in validation)
@@ -108,8 +118,36 @@ def current_estimate(responses: list[Response]) -> tuple[float, float]:
     return eap([(r.item.params, r.correct) for r in responses])
 
 
+class ExposureTracker:
+    """Running share of sessions in which each slot was shown, per specialization: answers spread among the
+    candidates of one market segment, so the exposure that matters is the one within the segment. The validation
+    feeds it session by session; the service builds the same rates from the database (service.exposure_rates)."""
+
+    def __init__(self) -> None:
+        self.sessions: dict[str, int] = {}
+        self.counts: dict[str, dict[str, int]] = {}
+
+    def record(self, scope: str, keys) -> None:
+        self.sessions[scope] = self.sessions.get(scope, 0) + 1
+        counts = self.counts.setdefault(scope, {})
+        for k in set(keys):
+            counts[k] = counts.get(k, 0) + 1
+
+    def rates(self, scope: str) -> dict[str, float]:
+        n = self.sessions.get(scope, 0)
+        if n < EXPOSURE_WARMUP:
+            return {}
+        return {k: v / n for k, v in self.counts.get(scope, {}).items()}
+
+
+def randomesque_k(n_answered: int) -> int:
+    return max(RANDOMESQUE_K_END, RANDOMESQUE_K_START - n_answered // 3)
+
+
 def select_next(bank: list[BankItem], blueprint: dict[str, float], responses: list[Response], theta: float,
-                rng: random.Random, exclude_keys: set[str] | None = None) -> BankItem | None:
+                rng: random.Random, exclude_keys: set[str] | None = None, exposure: dict[str, float] | None = None,
+                r_max: float | None = None) -> BankItem | None:
+    """exposure: item_key -> share of sessions that showed the slot (empty/None: no exposure control)."""
     used_keys = {r.item.key for r in responses} | (exclude_keys or set())
     fam_count: dict[str, int] = {}
     skill_count: dict[str, int] = {}
@@ -128,7 +166,12 @@ def select_next(bank: list[BankItem], blueprint: dict[str, float], responses: li
             pool = [it for it in pool if it.skill in blueprint] or pool
         if pool:
             pool.sort(key=lambda it: -fisher_info(theta, it.params))
-            return rng.choice(pool[:RANDOMESQUE_K])
+            if exposure:
+                r_max = EXPOSURE_MAX if r_max is None else r_max
+                admitted = [it for it in pool
+                            if rng.random() < min(1.0, r_max / max(exposure.get(it.key, 0.0), 1e-9))]
+                pool = admitted or pool  # never stall a session: if everything is overexposed, ignore the control
+            return rng.choice(pool[:randomesque_k(len(responses))])
     return None
 
 
@@ -152,14 +195,21 @@ def _thresholds(target_grade: str) -> tuple[float, float | None]:
     return thr, up
 
 
-def should_stop(responses: list[Response], target_grade: str, new_count: int | None = None) -> bool:
+def item_limits(express: bool = False) -> tuple[int, int]:
+    return (EXPRESS_MIN_ITEMS, EXPRESS_MAX_ITEMS) if express else (MIN_ITEMS, MAX_ITEMS)
+
+
+def should_stop(responses: list[Response], target_grade: str, new_count: int | None = None,
+                express: bool = False) -> bool:
     """new_count: items added in a follow-up attempt that continues a previous measurement (carry-over).
-    Such an attempt adds at least CARRY_MIN_NEW items targeted at the new grade and at most MAX_ITEMS."""
+    Such an attempt adds at least CARRY_MIN_NEW items targeted at the new grade and at most MAX_ITEMS.
+    express: the short demo mode for the jury (fewer items, wider uncertainty)."""
+    lo, hi = item_limits(express)
     n = len(responses)
     k = n if new_count is None else new_count
-    if k >= MAX_ITEMS:
+    if k >= hi:
         return True
-    if n < MIN_ITEMS or (new_count is not None and new_count < CARRY_MIN_NEW):
+    if n < lo or (new_count is not None and new_count < CARRY_MIN_NEW):
         return False
     pairs = [(r.item.params, r.correct) for r in responses]
     _, se = eap(pairs)

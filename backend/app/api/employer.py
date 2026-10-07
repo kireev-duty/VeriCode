@@ -20,7 +20,7 @@ from app.models import (
     Vacancy,
 )
 from app.modules import invitations as flow
-from app.modules import nlp
+from app.modules import llm, nlp
 from app.modules.matching import service as matching
 from app.modules.matching.scoring import COMPONENT_TITLES, DEFAULT_WEIGHTS, salary_status, score
 from app.modules.trust import trust_for
@@ -196,7 +196,10 @@ def _own_need(db, company, need_id: int) -> HiringNeed:
 
 @router.post("/needs/parse", summary="Разобрать текстовое описание потребности в структуру (NLP)")
 def parse_need(data: ParseIn):
-    parsed = nlp.parse_need(data.text)
+    """Rules first; with a configured LLM (GigaChat / YandexGPT) the result is refined and validated against the
+    catalog. `source` tells which path produced it: "rules" or "rules+llm"."""
+    parsed, source = llm.refine_need(data.text, nlp.parse_need(data.text))
+    parsed["source"] = source
     parsed["skill_titles"] = {s: SKILL_BY_ID[s].title for s in parsed["must_skills"] + parsed["nice_skills"]}
     return parsed
 
@@ -294,12 +297,12 @@ def search(data: SearchIn, company: CurrentCompany, db: DB):
             responses=ERRORS_404)
 def candidate_card(cand_id: int, company: CurrentCompany, db: DB, need_id: int | None = None):
     c = db.get(CandidateProfile, cand_id)
-    if c is None or c.grade is None or not c.visible_to_employers or c.consent_publication_at is None:
+    if c is None or not matching.in_bank(c):
         # an applicant stays visible to the company they applied to even if hidden from search
         if c is None or not matching.contacts_open(db, company.id, cand_id):
             raise err(404, "not_found", "Кандидат не найден или скрыл профиль")
     v = matching.candidate_view(c)
-    s = score(v, matching.need_spec(_own_need(db, company, need_id))) if need_id and c.grade else None
+    s = score(v, matching.need_spec(_own_need(db, company, need_id))) if need_id else None
     out = matching.card(c, v, s)
     out["experience"] = matching.experience_public(c)
     out["about"] = c.about
@@ -343,7 +346,7 @@ def inv_out(i: Invitation, opened: bool) -> dict:
              responses=ERRORS_404)
 def invite_preview(data: InvitePreviewIn, company: CurrentCompany, db: DB):
     c = db.get(CandidateProfile, data.candidate_id)
-    if c is None or c.grade is None:
+    if c is None or matching.effective_grade(c) is None:
         raise err(404, "not_found", "Кандидат не найден")
     st = salary_status(c.salary_expectation, data.salary_from, data.salary_to)
     below = bool(c.min_salary_for_invites and data.salary_to < c.min_salary_for_invites)
@@ -353,7 +356,9 @@ def invite_preview(data: InvitePreviewIn, company: CurrentCompany, db: DB):
              "unknown": "Кандидат не указал ожидания"}
     return {"salary_status": "below_threshold" if below else st,
             "hint": "Вилка ниже минимального порога кандидата: приглашение будет помечено" if below else hints[st],
-            "quota_left": flow.quota_left(db, company.id), "open_to_offers": c.open_to_offers}
+            "quota_left": flow.quota_left(db, company.id), "open_to_offers": c.open_to_offers,
+            "grade_warning": None if c.grade else
+            f"Грейд {GRADE_BY_ID[c.claimed_grade].title} заявлен, но тестом не подтверждён"}
 
 
 @router.post("/invitations", summary="Отправить приглашение кандидату (вилка обязательна)", status_code=201,

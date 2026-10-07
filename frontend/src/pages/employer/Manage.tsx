@@ -98,8 +98,8 @@ function VacancyEditor({ vacancy, onClose }: { vacancy: Vacancy | 'new' | null; 
           <MultiChips size="sm" options={(spec?.stack_options ?? []).concat(f.nice_skills.filter((s) => !spec?.stack_options.includes(s))).filter((s) => !f.must_skills.includes(s)).map((s) => ({ id: s, title: skillTitle(s) }))} value={f.nice_skills} onChange={(v) => set('nice_skills', v)} />
         </Field>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Зарплата от, ₽"><Input type="number" required min={1} step={5000} value={f.salary_from || ''} onChange={(e) => set('salary_from', Number(e.target.value))} /></Field>
-          <Field label="Зарплата до, ₽"><Input type="number" required min={1} step={5000} value={f.salary_to || ''} onChange={(e) => set('salary_to', Number(e.target.value))} /></Field>
+          <Field label="Зарплата от, ₽/мес до НДФЛ"><Input type="number" required min={0} step={1000} value={f.salary_from || ''} onChange={(e) => set('salary_from', Number(e.target.value))} /></Field>
+          <Field label="Зарплата до, ₽/мес до НДФЛ"><Input type="number" required min={0} step={1000} value={f.salary_to || ''} onChange={(e) => set('salary_to', Number(e.target.value))} /></Field>
           <Field label="Формат">
             <MultiChips size="sm" options={(Object.entries(catalog.work_formats) as [WorkFormat, string][]).map(([id, title]) => ({ id, title }))} value={f.work_formats} onChange={(v) => set('work_formats', v)} />
           </Field>

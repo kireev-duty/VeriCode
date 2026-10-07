@@ -74,7 +74,7 @@ function InvitationCard({ inv }: { inv: Invitation }) {
         </div>
         <div className="space-y-3">
           <div className="rounded-xl bg-brand-50 p-4">
-            <div className="text-xs text-brand-700">Зарплата, ₽/мес</div>
+            <div className="text-xs text-brand-700">Зарплата, ₽/мес до НДФЛ</div>
             <div className="mt-1 text-xl font-semibold text-brand-700">{salaryRange(inv.salary_from, inv.salary_to)}</div>
             {inv.work_format && <div className="mt-1 text-xs text-brand-700">формат: {({ remote: 'удалённо', hybrid: 'гибрид', office: 'офис' } as Record<string, string>)[inv.work_format]}</div>}
           </div>
@@ -111,7 +111,7 @@ function InvitationCard({ inv }: { inv: Invitation }) {
         ) : (
           <span className="text-sm text-muted">{inv.contact_method_hint ?? ''}</span>
         )}
-        <button className="ml-auto flex items-center gap-1 text-xs text-muted hover:text-accent-500" onClick={() => setComplain(true)}>
+        <button className="ml-auto flex items-center gap-1 text-xs text-muted hover:text-accent-600" onClick={() => setComplain(true)}>
           <Flag className="size-3.5" /> Пожаловаться
         </button>
       </div>
