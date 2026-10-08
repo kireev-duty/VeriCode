@@ -14,7 +14,7 @@ def public_code(c: CandidateProfile) -> str:
 
 
 def candidate_view(c: CandidateProfile) -> CandidateView:
-    fsp, reasons = fsp_score(c.achievements, (c.fsp_profile or {}).get("rank", ""))
+    fsp, reasons = fsp_score(c.achievements, (c.fsp_profile or {}).get("rank", ""), specialization=c.specialization)
     last = max([d for d in (c.grade_confirmed_at, c.last_task_at) if d is not None], default=None)
     text = " ".join([c.headline or "", c.about or ""] + [e.get("summary", "") + " " + e.get("position", "")
                                                          for e in (c.experience or []) if isinstance(e, dict)])

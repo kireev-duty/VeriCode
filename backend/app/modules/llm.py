@@ -23,6 +23,7 @@ import httpx
 
 from app.catalog import GRADE_ORDER, SKILL_BY_ID, SKILLS, SOFT_SKILLS, SPEC_BY_ID, TEAM_ROLES, WORK_FORMATS
 from app.core.config import settings
+from app.modules import nlp
 
 log = logging.getLogger(__name__)
 
@@ -283,7 +284,7 @@ RESUME_SYSTEM = """Ты разбираешь текст резюме ИТ-спе
 
 
 def refine_resume(text: str, rules: dict) -> tuple[dict, str]:
-    data = complete_json(RESUME_SYSTEM + _catalog_prompt(), text[:8000])
+    data = complete_json(RESUME_SYSTEM + _catalog_prompt(), nlp.redact_contacts(text)[:8000])
     if not data:
         return rules, RULES
     rule_skills = [s["id"] for s in rules["skills"]]
@@ -357,8 +358,6 @@ if __name__ == "__main__":
     print(f"provider: {provider.name if provider else 'none (LLM_PROVIDER / LLM_API_KEY not set)'}")
     sample = " ".join(sys.argv[1:]) or ("Нужен сильный бэкендер на Python, знание реляционных баз, опыт с очередями "
                                         "сообщений приветствуется. Удалёнка, до 300 тысяч.")
-    from app.modules import nlp
-
     rules = nlp.parse_need(sample)
     refined, source = refine_need(sample, rules)
     print(json.dumps({"rules": rules, "refined": refined, "source": source}, ensure_ascii=False, indent=1))

@@ -22,6 +22,28 @@ const COMPONENT_TITLES: Record<string, string> = {
   text: 'Описание',
 }
 
+function Integrity({ t }: { t: NonNullable<CandidateDetail['test_integrity']> }) {
+  const signals = [
+    [t.blur_events, 'уход со вкладки'],
+    [t.paste_events, 'вставка из буфера'],
+    [t.fast_correct, 'верный ответ быстрее 10% лимита'],
+    [t.timeouts, 'ответ после лимита времени'],
+  ].filter(([n]) => (n as number) > 0) as [number, string][]
+  return (
+    <div className="mt-4 border-t border-line pt-3 text-sm">
+      <div className="font-medium">Сигналы последнего теста</div>
+      {signals.length === 0 ? (
+        <div className="mt-1 text-muted">Без сигналов, {t.items} заданий</div>
+      ) : (
+        <ul className="mt-1 space-y-0.5 text-muted">
+          {signals.map(([n, label]) => <li key={label}>{label}: {n}</li>)}
+        </ul>
+      )}
+      <p className="mt-2 text-xs text-muted">Для сведения: грейд за сигналы не снижается, ложные срабатывания возможны.</p>
+    </div>
+  )
+}
+
 export function EmployerCandidate() {
   const { id } = useParams()
   const [params] = useSearchParams()
@@ -231,6 +253,7 @@ export function EmployerCandidate() {
                   </div>
                 ))}
               </div>
+              {c.test_integrity && <Integrity t={c.test_integrity} />}
             </Card>
           )}
         </div>

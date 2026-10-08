@@ -7,7 +7,8 @@ It only moves a candidate inside a category; the grade itself comes from the tes
 
 Per the organisers' Q&A: no hierarchy of events or disciplines (a regional hackathon counts as much as a national
 championship), what matters is how many events and the result in each. Plain participations are capped, so a
-profile cannot be pumped up with online qualifier attendance.
+profile cannot be pumped up with online qualifier attendance. The one thing the discipline changes is relevance:
+a security contest says more about a DevOps engineer than a robotics one (organisers' idea, Q&A of 08.10).
 """
 
 import math
@@ -33,6 +34,15 @@ DISCIPLINE_SKILLS = {
     "drones": ["cpp", "python", "cv"],
     "robotics": ["cpp", "python"],
 }
+# disciplines close to a specialization; others still count, with OFF_PROFILE weight
+RELEVANT_SPECS = {
+    "product": {"backend", "frontend", "data", "qa", "devops"},
+    "algorithmic": {"backend", "data"},
+    "security": {"backend", "devops", "qa"},
+    "drones": {"backend", "data"},
+    "robotics": {"backend", "data"},
+}
+OFF_PROFILE = 0.6
 HALF_LIFE_YEARS = 2.0
 SCALE = 0.7  # winner this year -> score ~0.5
 PARTICIPATION_CAP = 0.3  # max contribution of all plain participations to the total (< one prize place)
@@ -44,19 +54,26 @@ def _age_years(date: datetime, now: datetime) -> float:
     return max(0.0, (now - date).days / 365.25)
 
 
-def achievement_weight(a, now: datetime | None = None) -> float:
-    """Result x recency. Level and discipline deliberately do not matter."""
+def relevance(discipline: str, specialization: str | None) -> float:
+    if not specialization or specialization in RELEVANT_SPECS.get(discipline, {specialization}):
+        return 1.0
+    return OFF_PROFILE
+
+
+def achievement_weight(a, now: datetime | None = None, specialization: str | None = None) -> float:
+    """Result x recency x relevance to the specialization. The event level deliberately does not matter."""
     now = now or datetime.now(UTC)
     result = RESULTS.get(a.result_type, ("", 0.2))[1]
     decay = 0.5 ** (_age_years(a.date, now) / HALF_LIFE_YEARS)
-    return result * decay
+    return result * decay * relevance(a.discipline, specialization)
 
 
-def fsp_score(achievements, rank: str, now: datetime | None = None) -> tuple[float, list[str]]:
+def fsp_score(achievements, rank: str, now: datetime | None = None,
+              specialization: str | None = None) -> tuple[float, list[str]]:
     """0..1 saturating score and short human-readable reasons."""
     if not achievements and not rank:
         return 0.0, []
-    weights = sorted(((achievement_weight(a, now), a) for a in achievements), key=lambda x: -x[0])
+    weights = sorted(((achievement_weight(a, now, specialization), a) for a in achievements), key=lambda x: -x[0])
     placed = sum(w for w, a in weights if a.result_type != "participant") * SCALE
     participated = min(PARTICIPATION_CAP, sum(w for w, a in weights if a.result_type == "participant") * SCALE)
     total = placed + participated + RANKS.get(rank, 0.0)

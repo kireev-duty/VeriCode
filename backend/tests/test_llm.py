@@ -94,6 +94,17 @@ def test_refine_resume_keeps_exact_contacts():
     assert "Телепатия" not in out["soft_skills"] and "Коммуникация" in out["soft_skills"]
 
 
+def test_contacts_are_not_sent_to_the_provider():
+    text = "Иван Петров\nivan@example.com, 8 (999) 000-11-22, tg: @ivan_petrov\nДелал API на FastAPI."
+    provider = FakeProvider("{}")
+    sent = []
+    provider.chat = lambda system, user: sent.append(user) or "{}"
+    llm.set_provider(provider)
+    llm.refine_resume(text, parse_resume_text(text))
+    assert sent and "FastAPI" in sent[0]
+    assert not any(s in sent[0] for s in ("ivan@example.com", "000-11-22", "ivan_petrov"))
+
+
 def test_rubric_point_needs_a_real_quote():
     answer = "Сначала посмотрю метрики и логи, затем воспроизведу проблему на стенде и только потом откачу релиз."
     reply = json.dumps({"points": [

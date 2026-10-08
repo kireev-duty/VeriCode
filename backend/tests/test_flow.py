@@ -90,6 +90,7 @@ def test_full_reverse_matching_flow(client):
 
     card = client.get(f"/api/employer/candidates/{cand_id}", headers=emp).json()
     assert card["contacts_open"] is False and card["contacts"] is None
+    assert card["test_integrity"]["items"] > 0 and {"paste_events", "blur_events", "fast_correct"} <= set(card["test_integrity"])
 
     # salary is mandatory, preview tells whether the range fits without revealing the number
     r = client.post("/api/employer/invitations", headers=emp, json={

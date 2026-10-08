@@ -506,7 +506,7 @@ def _view(c: synth.SynthCandidate, now, use_test=True, use_fsp=True) -> Candidat
     fsp, reasons = 0.0, []
     if use_fsp and c.fsp_id:
         achievements, rank = synthetic_achievements(c, random.Random(zlib.crc32(c.full_name.encode()) + int(c.theta * 1000)), now)
-        fsp, reasons = fsp_score(achievements, rank, now)
+        fsp, reasons = fsp_score(achievements, rank, now, specialization=c.spec)
     return CandidateView(
         id=id(c), specialization=c.spec,
         grade=res["grade"] if use_test else c.declared_grade,

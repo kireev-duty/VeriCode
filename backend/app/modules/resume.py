@@ -91,7 +91,7 @@ def _name(lines: list[str]) -> str:
 
 
 def _phone(text: str) -> str:
-    m = re.search(r"(?:\+7|(?<!\d)8)[\s(-]*\d{3}[\s)-]*\d{3}[\s-]*\d{2}[\s-]*\d{2}", text)
+    m = nlp.PHONE_RE.search(text)
     if not m:
         return ""
     digits = re.sub(r"\D", "", m.group(0))
@@ -101,9 +101,8 @@ def _phone(text: str) -> str:
 def parse_resume_text(text: str) -> dict:
     lines = [ln for ln in text.splitlines() if ln.strip()]
     low = text.lower()
-    email = re.search(r"[\w.+-]+@[\w-]+\.[\w.-]+", text)
-    # "@handle", "t.me/handle", "Telegram: handle", "tg: @handle"; not an e-mail and not "PostgreSQL"
-    tg = re.search(r"(?:t\.me/|telegram[:\s]*@?|(?<![\w])tg[:\s]+@?|(?<![\w.@])@)([A-Za-z][\w]{4,31})", text, re.I)
+    email = nlp.EMAIL_RE.search(text)
+    tg = nlp.TELEGRAM_RE.search(text)
 
     explicit = re.search(r"опыт работы[^\d]{0,20}(\d+)\s*(?:год|лет|г\.)(?:\D{0,5}(\d+)\s*мес)?", low)
     if explicit:

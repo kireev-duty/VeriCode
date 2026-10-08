@@ -273,6 +273,9 @@ def finish(db: Session, session: AssessmentSession, responses: list[cat.Response
         "timeouts": sum(1 for i in items if (i.signals or {}).get("timed_out")),
         "paste_events": sum(int((i.signals or {}).get("paste", 0)) for i in items),
         "blur_events": sum(int((i.signals or {}).get("blur", 0)) for i in items),
+        # correct in under a tenth of the time limit: reading the task alone takes longer
+        "fast_correct": sum(1 for i in items if i.is_correct
+                            and (i.signals or {}).get("elapsed_s", i.time_limit_s) < 0.1 * i.time_limit_s),
         "items": len(items),
         "measured_grade": d.measured_grade,
         "p_up": d.p_up,

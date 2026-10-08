@@ -16,6 +16,19 @@ _CITY_STEMS = {c: c.lower()[: max(5, len(c) - 2)] for c in CITIES}
 _CITY_STEMS["Санкт-Петербург"] = "петербург"
 _CITY_STEMS["Москва"] = "москв"
 
+EMAIL_RE = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+")
+PHONE_RE = re.compile(r"(?:\+7|(?<!\d)8)[\s(-]*\d{3}[\s)-]*\d{3}[\s-]*\d{2}[\s-]*\d{2}")
+# "@handle", "t.me/handle", "Telegram: handle", "tg: @handle"; not an e-mail and not "PostgreSQL"
+TELEGRAM_RE = re.compile(r"(?:t\.me/|telegram[:\s]*@?|(?<![\w])tg[:\s]+@?|(?<![\w.@])@)([A-Za-z][\w]{4,31})", re.I)
+
+
+def redact_contacts(text: str) -> str:
+    """Contacts never leave the server: they are extracted by rules, an LLM gets the text without them."""
+    text = EMAIL_RE.sub("[email]", text)
+    text = PHONE_RE.sub("[телефон]", text)
+    return TELEGRAM_RE.sub("[telegram]", text)
+
+
 _SPEC_KEYWORDS = {
     "backend": ["backend", "бэкенд", "бекенд", "back-end", "серверн", "api"],
     "frontend": ["frontend", "фронтенд", "front-end", "верстк", "вёрстк", "интерфейс", "spa"],

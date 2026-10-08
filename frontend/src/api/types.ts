@@ -97,6 +97,7 @@ export interface CandidateDetail extends CandidateCard {
   last_task_at: string | null
   task_score: number
   test_history: { grade: string | null; reason: string; created_at: string }[]
+  test_integrity: { items: number; timeouts: number; paste_events: number; blur_events: number; fast_correct: number } | null
   contacts_open: boolean
   contacts: { full_name: string; email: string; phone: string; telegram: string } | null
   invitations: { id: number; status: string; position_title: string; created_at: string }[]

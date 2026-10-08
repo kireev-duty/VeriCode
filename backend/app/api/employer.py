@@ -11,6 +11,7 @@ from app.api.deps import AUTH_ERRORS, DB, ERRORS_404, CurrentCompany, err
 from app.catalog import GRADE_BY_ID, SKILL_BY_ID, SPEC_BY_ID
 from app.models import (
     Application,
+    AssessmentSession,
     CandidateProfile,
     GradeHistory,
     HiringNeed,
@@ -311,6 +312,12 @@ def candidate_card(cand_id: int, company: CurrentCompany, db: DB, need_id: int |
     out["test_history"] = [{"grade": h.grade, "reason": h.reason, "created_at": h.created_at}
                            for h in db.scalars(select(GradeHistory).where(GradeHistory.candidate_id == c.id)
                                                .order_by(GradeHistory.created_at.desc()))]
+    last = db.scalars(select(AssessmentSession).where(AssessmentSession.candidate_id == c.id,
+                                                      AssessmentSession.status == "finished")
+                      .order_by(AssessmentSession.finished_at.desc()).limit(1)).first()
+    flags = (last.flags or {}) if last else {}
+    out["test_integrity"] = ({k: int(flags.get(k, 0)) for k in
+                              ("items", "timeouts", "paste_events", "blur_events", "fast_correct")} if last else None)
     opened = matching.contacts_open(db, company.id, c.id)
     out["contacts_open"] = opened
     out["contacts"] = ({"full_name": c.full_name, "email": c.contact_email, "phone": c.phone,

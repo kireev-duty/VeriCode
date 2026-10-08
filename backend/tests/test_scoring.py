@@ -121,6 +121,13 @@ def test_fsp_no_hierarchy_of_events_or_disciplines():
     assert regional == federal
 
 
+def test_fsp_relevant_discipline_counts_more():
+    from app.modules.fsp.scoring import fsp_score
+    security = [_ach("winner", discipline="security")]
+    assert fsp_score(security, "", NOW, "devops")[0] > fsp_score(security, "", NOW, "frontend")[0] > 0
+    assert fsp_score(security, "", NOW)[0] == fsp_score(security, "", NOW, "devops")[0]  # no specialization: full weight
+
+
 def test_fsp_participations_are_capped_below_one_prize():
     from app.modules.fsp.scoring import fsp_score
     many_visits = fsp_score([_ach("participant") for _ in range(20)], "", NOW)[0]

@@ -9,6 +9,8 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
+import time
 from pathlib import Path
 
 import markdown
@@ -50,7 +52,9 @@ def md_to_html(text: str, base: Path) -> str:
     text = re.sub(r"```mermaid\n(.*?)```", lambda m: f'<div class="mermaid">\n{m.group(1)}</div>', text, flags=re.S)
     text = re.sub(r"!\[(.*?)\]\((?!http)(.*?)\)",
                   lambda m: f"![{m.group(1)}]({(base / m.group(2)).resolve().as_uri()})", text)
-    html = markdown.markdown(text, extensions=["tables", "fenced_code"])
+    # GitHub nests list content at 3 spaces after "1. ", Python-Markdown needs 4
+    text = re.sub(r"(?m)^   (?=\S)", "    ", text)
+    html =markdown.markdown(text, extensions=["tables", "fenced_code"])
     # short tables move to the next page whole instead of leaving a row or two behind
     return re.sub(r"<table>(.*?)</table>",
                   lambda m: f'<table{" class=keep" if m.group(1).count("<tr>") <= 14 else ""}>{m.group(1)}</table>',
@@ -83,9 +87,19 @@ def main() -> None:
     out_html = DOCS / "_build.html"
     out_html.write_text(html, encoding="utf-8")
     out_pdf = DOCS / "ФСП-Талант-документация.pdf"
-    subprocess.run([browser(), "--headless", "--disable-gpu", "--no-pdf-header-footer", "--virtual-time-budget=15000",
-                    f"--print-to-pdf={out_pdf}", out_html.resolve().as_uri()], check=True, capture_output=True)
+    out_pdf.unlink(missing_ok=True)  # a stale PDF must not pass for a fresh one
+    # own profile: otherwise a running Edge/Chrome takes over the call and nothing is printed
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as profile:
+        subprocess.run([browser(), "--headless=new", "--disable-gpu", "--no-first-run", "--no-pdf-header-footer",
+                        "--virtual-time-budget=15000", f"--user-data-dir={profile}", f"--print-to-pdf={out_pdf}",
+                        out_html.resolve().as_uri()], check=True, capture_output=True)
+        for _ in range(120):  # msedge.exe on Windows may return before the PDF is written
+            if out_pdf.exists() and out_pdf.stat().st_size:
+                break
+            time.sleep(0.5)
     out_html.unlink()
+    if not out_pdf.exists():
+        sys.exit("the browser did not write the PDF")
     print(f"written {out_pdf} ({out_pdf.stat().st_size // 1024} KB)")
 
 
