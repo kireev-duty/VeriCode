@@ -21,8 +21,7 @@
 ![Keycloak](https://img.shields.io/badge/Keycloak-26-4D4D4D?logo=keycloak&logoColor=white)
 ![Docker Compose](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
 
-[🎬 **Видео**](https://cloud.mail.ru/public/2fce/HawvwLkqr) &nbsp;·&nbsp;
-[📊 **Презентация**](https://cloud.mail.ru/public/2fce/HawvwLkqr) &nbsp;·&nbsp;
+[🎬 **Видео и Преентация**](https://cloud.mail.ru/public/2fce/HawvwLkqr) &nbsp;·&nbsp;
 [📄 **Документация (PDF)**](docs/ФСП-Талант-документация.pdf) &nbsp;·&nbsp;
 [📈 **Отчёт валидации**](docs/validation/report.md) &nbsp;·&nbsp;
 [🚀 **Быстрый старт**](#-быстрый-старт)
